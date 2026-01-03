@@ -10,11 +10,6 @@ Content-Type: application/json
 
 ###
 
-### Get all comments
-GET http://localhost:3000/comments
-
-###
-
 ### Get comments by postId (Replace <POST_ID> with actual ID)
 GET http://localhost:3000/comments?postId=69598abaf0f4777a70779edd
 

@@ -21,9 +21,6 @@ const getAllComments = async (req, res) => {
         if (filter.postId) {
             const comments = await commentModel.find({ postId: filter.postId });
             res.status(200).json(comments);
-        } else {
-            const comments = await commentModel.find();
-            res.status(200).json(comments);
         }
     } catch (err) {
         res.status(400).json({ message: err.message });
