@@ -10,6 +10,10 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 
+// Routes
+const postRoutes = require('./routes/postRoutes');
+app.use('/post', postRoutes);
+
 // Basic Route
 app.get('/', (req, res) => {
     res.send('API is running...');
