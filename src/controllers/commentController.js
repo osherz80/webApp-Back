@@ -44,9 +44,29 @@ const getCommentById = async (req, res) => {
     }
 };
 
+const updateComment = async (req, res) => {
+    const { id } = req.params;
+    const { message, sender, postId } = req.body;
+    try {
+        const updatedComment = await commentModel.findByIdAndUpdate(
+            id,
+            { message, sender, postId },
+            { new: true, runValidators: true }
+        );
+        if (updatedComment) {
+            res.status(200).json(updatedComment);
+        } else {
+            res.status(404).json({ message: 'Comment not found' });
+        }
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+};
+
 
 module.exports = {
     addComment,
     getAllComments,
-    getCommentById
+    getCommentById,
+    updateComment
 };
