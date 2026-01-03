@@ -15,6 +15,22 @@ const addPost = async (req, res) => {
     }
 };
 
+const getAllPosts = async (req, res) => {
+    const filter = req.query;
+    try {
+        if (filter.sender) {
+            const posts = await postModel.find({ sender: filter.sender });
+            res.status(200).json(posts);
+        } else {
+            const posts = await postModel.find();
+            res.status(200).json(posts);
+        }
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+};
+
 module.exports = {
-    addPost
+    addPost,
+    getAllPosts
 };
