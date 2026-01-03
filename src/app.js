@@ -14,6 +14,9 @@ app.use(express.json());
 const postRoutes = require('./routes/postRoutes');
 app.use('/post', postRoutes);
 
+const commentRoutes = require('./routes/commentRoutes');
+app.use('/comments', commentRoutes);
+
 // Basic Route
 app.get('/', (req, res) => {
     res.send('API is running...');
@@ -30,3 +33,4 @@ mongoose.connect(process.env.MONGO_URI)
     .catch((err) => {
         console.error('Could not connect to MongoDB', err);
     });
+    
