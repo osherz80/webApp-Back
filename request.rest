@@ -1,0 +1,36 @@
+### Get all posts
+GET http://localhost:3000/post
+
+###
+
+### Get posts by sender
+GET http://localhost:3000/post?sender=12345
+
+###
+
+### Add a new post
+POST http://localhost:3000/post
+Content-Type: application/json
+
+{
+    "message": "This is a new post",
+    "sender": "12345",
+    "title": "My Post Title"
+}
+
+###
+
+### Get a post by ID (Replace <ID> with an actual ID)
+GET http://localhost:3000/post/677826317b6a65597ea67262
+
+###
+
+### Update a post (Replace <ID> with an actual ID)
+PUT http://localhost:3000/post/677826317b6a65597ea67262
+Content-Type: application/json
+
+{
+    "message": "This is an updated post",
+    "sender": "12345",
+    "title": "Updated Title"
+}
