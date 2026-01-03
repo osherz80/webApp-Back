@@ -63,10 +63,24 @@ const updateComment = async (req, res) => {
     }
 };
 
+const deleteComment = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const deletedComment = await commentModel.findByIdAndDelete(id);
+        if (deletedComment) {
+            res.status(200).json({ message: 'Comment deleted successfully' });
+        } else {
+            res.status(404).json({ message: 'Comment not found' });
+        }
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+};
 
 module.exports = {
     addComment,
     getAllComments,
     getCommentById,
-    updateComment
+    updateComment,
+    deleteComment
 };
