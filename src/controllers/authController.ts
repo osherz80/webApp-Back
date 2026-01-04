@@ -85,7 +85,35 @@ const login = async (req: Request, res: Response) => {
     }
 };
 
+const logout = async (req: Request, res: Response) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        res.status(400).json({ message: 'Missing refresh token' });
+        return;
+    }
+
+    try {
+        const refreshTokenSecret = process.env.JWT_REFRESH_SECRET || 'refreshSecret';
+        const payload: any = jwt.verify(refreshToken, refreshTokenSecret);
+        const user = await userModel.findById(payload.userId);
+
+        if (!user || !user.refreshTokens || !user.refreshTokens.includes(refreshToken)) {
+            res.status(401).json({ message: 'Invalid refresh token' });
+            return;
+        }
+
+        user.refreshTokens = user.refreshTokens.filter(token => token !== refreshToken);
+        await user.save();
+
+        res.status(200).json({ message: 'Logged out successfully' });
+    } catch (err: any) {
+        res.status(401).json({ message: 'Invalid refresh token' });
+    }
+};
+
 export default {
     register,
-    login
+    login,
+    logout
 };
