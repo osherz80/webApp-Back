@@ -3,6 +3,27 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import userModel from '../models/userModel.js';
 
+const generateTokens = (userId: string) => {
+    const accessTokenSecret = process.env.JWT_SECRET || 'secret';
+    const refreshTokenSecret = process.env.JWT_REFRESH_SECRET || 'refreshSecret';
+    const accessTokenExp = parseInt(process.env.JWT_EXP || '15');
+    const refreshTokenExp = parseInt(process.env.JWT_REFRESH_EXP || '7');
+
+    const accessToken = jwt.sign(
+        { userId },
+        accessTokenSecret,
+        { expiresIn: `${accessTokenExp}Minute` }
+    );
+
+    const refreshToken = jwt.sign(
+        { userId },
+        refreshTokenSecret,
+        { expiresIn: `${refreshTokenExp}Days` }
+    );
+
+    return { accessToken, refreshToken };
+};
+
 const register = async (req: Request, res: Response) => {
     const { username, email, password } = req.body;
 
@@ -53,20 +74,7 @@ const login = async (req: Request, res: Response) => {
             return;
         }
 
-        const accessTokenSecret = process.env.JWT_SECRET || 'secret';
-        const refreshTokenSecret = process.env.JWT_REFRESH_SECRET || 'refreshSecret';
-
-        const accessToken = jwt.sign(
-            { userId: user._id },
-            accessTokenSecret,
-            { expiresIn: '15m' }
-        );
-
-        const refreshToken = jwt.sign(
-            { userId: user._id },
-            refreshTokenSecret,
-            { expiresIn: '7d' }
-        );
+        const { accessToken, refreshToken } = generateTokens(user._id.toString());
 
         // Save refresh token to user model
         if (!user.refreshTokens) {
@@ -130,18 +138,7 @@ const refresh = async (req: Request, res: Response) => {
             return;
         }
 
-        const accessTokenSecret = process.env.JWT_SECRET || 'secret';
-        const newAccessToken = jwt.sign(
-            { userId: user._id },
-            accessTokenSecret,
-            { expiresIn: '15m' }
-        );
-
-        const newRefreshToken = jwt.sign(
-            { userId: user._id },
-            refreshTokenSecret,
-            { expiresIn: '7d' }
-        );
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = generateTokens(user._id.toString());
 
         // Token Rotation
         user.refreshTokens = user.refreshTokens.filter(token => token !== refreshToken);
