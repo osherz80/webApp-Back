@@ -1,0 +1,34 @@
+### Add a new comment (Replace <POST_ID> with an actual ID)
+POST http://localhost:3000/comments
+Content-Type: application/json
+
+{
+    "message": "This is a comment",
+    "sender": "User123",
+    "postId": "69598abaf0f4777a70779edd"
+}
+
+###
+
+### Get comments by postId (Replace <POST_ID> with actual ID)
+GET http://localhost:3000/comments?postId=69598abaf0f4777a70779edd
+
+###
+
+### Get a comment by ID (Replace <COMMENT_ID> with actual ID)
+GET http://localhost:3000/comments/69598bfaf0f4777a70779ef2
+
+###
+
+### Update a comment (Replace <COMMENT_ID> with actual ID)
+PUT http://localhost:3000/comments/69598bfaf0f4777a70779ef2
+Content-Type: application/json
+
+{
+    "message": "Updated comment message"
+}
+
+###
+
+### Delete a comment (Replace <COMMENT_ID> with actual ID)
+DELETE http://localhost:3000/comments/69598bfaf0f4777a70779ef2
