@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import userModel from '../models/userModel.js';
 
 const register = async (req: Request, res: Response) => {
@@ -31,6 +32,60 @@ const register = async (req: Request, res: Response) => {
     }
 };
 
+const login = async (req: Request, res: Response) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        res.status(400).json({ message: 'Missing email or password' });
+        return;
+    }
+
+    try {
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            res.status(401).json({ message: 'Invalid email or password' });
+            return;
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            res.status(401).json({ message: 'Invalid email or password' });
+            return;
+        }
+
+        const accessTokenSecret = process.env.JWT_SECRET || 'secret';
+        const refreshTokenSecret = process.env.JWT_REFRESH_SECRET || 'refreshSecret';
+
+        const accessToken = jwt.sign(
+            { userId: user._id },
+            accessTokenSecret,
+            { expiresIn: '15m' }
+        );
+
+        const refreshToken = jwt.sign(
+            { userId: user._id },
+            refreshTokenSecret,
+            { expiresIn: '7d' }
+        );
+
+        // Save refresh token to user model
+        if (!user.refreshTokens) {
+            user.refreshTokens = [];
+        }
+        user.refreshTokens.push(refreshToken);
+        await user.save();
+
+        res.status(200).json({
+            accessToken,
+            refreshToken,
+            userId: user._id
+        });
+    } catch (err: any) {
+        res.status(400).json({ message: err.message });
+    }
+};
+
 export default {
-    register
+    register,
+    login
 };
