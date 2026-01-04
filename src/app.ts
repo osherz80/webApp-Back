@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import postRoutes from './routes/postRoutes.js';
 import commentRoutes from './routes/commentRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 // Routes
 app.use('/post', postRoutes);
 app.use('/comments', commentRoutes);
+app.use('/auth', authRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
