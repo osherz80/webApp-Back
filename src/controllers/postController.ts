@@ -1,6 +1,7 @@
-const postModel = require('../models/postModel');
+import { Request, Response } from 'express';
+import postModel from '../models/postModel.js';
 
-const addPost = async (req, res) => {
+const addPost = async (req: Request, res: Response) => {
     const { message, sender, title } = req.body;
     try {
         const newPost = new postModel({
@@ -10,27 +11,28 @@ const addPost = async (req, res) => {
         });
         const savedPost = await newPost.save();
         res.status(201).json(savedPost);
-    } catch (err) {
+    } catch (err: any) {
         res.status(400).json({ message: err.message });
     }
 };
 
-const getAllPosts = async (req, res) => {
+const getAllPosts = async (req: Request, res: Response) => {
     const filter = req.query;
     try {
-        if (filter.sender) {
-            const posts = await postModel.find({ sender: filter.sender });
+        if (filter['sender']) {
+            const sender = filter['sender'] as string
+            const posts = await postModel.find({ sender });
             res.status(200).json(posts);
         } else {
             const posts = await postModel.find();
             res.status(200).json(posts);
         }
-    } catch (err) {
+    } catch (err: any) {
         res.status(400).json({ message: err.message });
     }
 };
 
-const getPostById = async (req, res) => {
+const getPostById = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
         const post = await postModel.findById(id);
@@ -39,12 +41,12 @@ const getPostById = async (req, res) => {
         } else {
             res.status(404).json({ message: 'Post not found' });
         }
-    } catch (err) {
+    } catch (err: any) {
         res.status(400).json({ message: err.message });
     }
 };
 
-const updatePost = async (req, res) => {
+const updatePost = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { message, sender, title } = req.body;
     try {
@@ -58,12 +60,12 @@ const updatePost = async (req, res) => {
         } else {
             res.status(404).json({ message: 'Post not found' });
         }
-    } catch (err) {
+    } catch (err: any) {
         res.status(400).json({ message: err.message });
     }
 };
 
-module.exports = {
+export default {
     addPost,
     getAllPosts,
     getPostById,
