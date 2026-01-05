@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
-import postModel from '../models/postModel.js';
+import { AuthRequest } from '../middleware/authMiddleware';
+import postModel from '../models/postModel';
 
-const addPost = async (req: Request, res: Response) => {
-    const { message, sender, title } = req.body;
+const addPost = async (req: AuthRequest, res: Response) => {
+    const { message, title } = req.body;
+    const sender = req.user?._id;
     try {
         const newPost = new postModel({
             message,
@@ -46,9 +48,10 @@ const getPostById = async (req: Request, res: Response) => {
     }
 };
 
-const updatePost = async (req: Request, res: Response) => {
+const updatePost = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
-    const { message, sender, title } = req.body;
+    const { message, title } = req.body;
+    const sender = req.user?._id;
     try {
         const updatedPost = await postModel.findByIdAndUpdate(
             id,
