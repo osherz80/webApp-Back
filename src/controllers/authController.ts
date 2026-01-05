@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import userModel from '../models/userModel.js';
+import userModel from '../models/userModel';
 
 const generateTokens = (userId: string) => {
     const accessTokenSecret = process.env.JWT_SECRET || 'secret';
