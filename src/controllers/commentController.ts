@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
-import commentModel from '../models/commentModel.js';
+import { AuthRequest } from '../middleware/authMiddleware';
+import commentModel from '../models/commentModel';
 
-const addComment = async (req: Request, res: Response) => {
-    const { message, sender, postId } = req.body;
+const addComment = async (req: AuthRequest, res: Response) => {
+    const { message, postId } = req.body;
+    const sender = req.user?._id;
     try {
         const newComment = new commentModel({
             message,
@@ -46,9 +48,10 @@ const getCommentById = async (req: Request, res: Response) => {
     }
 };
 
-const updateComment = async (req: Request, res: Response) => {
+const updateComment = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
-    const { message, sender, postId } = req.body;
+    const { message, postId } = req.body;
+    const sender = req.user?._id;
     try {
         const updatedComment = await commentModel.findByIdAndUpdate(
             id,
