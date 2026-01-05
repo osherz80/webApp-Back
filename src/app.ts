@@ -1,11 +1,12 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import postRoutes from './routes/postRoutes.js';
-import commentRoutes from './routes/commentRoutes.js';
-import authRoutes from './routes/authRoutes.js';
-import userRoutes from './routes/userRoutes.js';
-
+import postRoutes from './routes/postRoutes';
+import commentRoutes from './routes/commentRoutes';
+import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpecs from './swaggerConfig';
 dotenv.config();
 
 const app = express();
@@ -19,6 +20,8 @@ app.use('/post', postRoutes);
 app.use('/comments', commentRoutes);
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+
 
 // Basic Route
 app.get('/', (req, res) => {
