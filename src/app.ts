@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import postRoutes from './routes/postRoutes.js';
 import commentRoutes from './routes/commentRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use('/post', postRoutes);
 app.use('/comments', commentRoutes);
 app.use('/auth', authRoutes);
+app.use('/user', userRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
