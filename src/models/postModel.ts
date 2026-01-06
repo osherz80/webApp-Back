@@ -1,8 +1,8 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IPost extends Document {
     message: string;
-    sender: string;
+    sender: Types.ObjectId;
     title?: string;
     createdAt: Date;
     updatedAt: Date;
@@ -14,7 +14,8 @@ const postSchema = new Schema<IPost>({
         required: true
     },
     sender: {
-        type: String,
+        type: Schema.Types.ObjectId,
+        ref: 'User',
         required: true
     },
     title: {
