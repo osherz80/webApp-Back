@@ -172,6 +172,56 @@ describe('Auth API', () => {
         expect(response.status).toBe(401);
         expect(response.body.message).toBe('Invalid refresh token');
     });
+
+    describe('Auth Middleware', () => {
+        test('Should fail if no authorization header', async () => {
+            const response = await request(app).post('/post').send({ title: 'Test', message: 'Test' });
+            expect(response.status).toBe(401);
+            expect(response.body.message).toBe('Unauthorized');
+        });
+
+        test('Should fail if header does not start with Bearer', async () => {
+            const response = await request(app)
+                .post('/post')
+                .set('Authorization', 'Basic 12345')
+                .send({ title: 'Test', message: 'Test' });
+            expect(response.status).toBe(401);
+            expect(response.body.message).toBe('Unauthorized');
+        });
+
+        test('Should fail if header is just "Bearer" without space', async () => {
+            const response = await request(app)
+                .post('/post')
+                .set('Authorization', 'Bearer')
+                .send({ title: 'Test', message: 'Test' });
+            expect(response.status).toBe(401);
+            expect(response.body.message).toBe('Unauthorized');
+        });
+
+        test('Should fail if token is invalid', async () => {
+            const response = await request(app)
+                .post('/post')
+                .set('Authorization', 'Bearer invalid-token')
+                .send({ title: 'Test', message: 'Test' });
+            expect(response.status).toBe(401);
+            expect(response.body.message).toBe('Unauthorized, invalid token');
+        });
+
+        test('Should fail if token is expired', async () => {
+            const secret = process.env.JWT_SECRET || 'secret';
+            const expiredToken = jwt.sign({ userId: '123' }, secret, { expiresIn: '0s' });
+
+            // Wait a tiny bit just in case
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            const response = await request(app)
+                .post('/post')
+                .set('Authorization', `Bearer ${expiredToken}`)
+                .send({ title: 'Test', message: 'Test' });
+            expect(response.status).toBe(401);
+            expect(response.body.message).toBe('Unauthorized, invalid token');
+        });
+    });
 });
 
 
