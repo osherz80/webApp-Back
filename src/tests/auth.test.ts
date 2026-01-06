@@ -2,6 +2,8 @@ import request from 'supertest';
 import app from '../app';
 import mongoose from 'mongoose';
 import userModel from '../models/userModel';
+import jwt from 'jsonwebtoken';
+
 
 let server: any;
 
@@ -88,9 +90,88 @@ describe('Auth API', () => {
         expect(response.status).toBe(401);
     });
 
-    test('Refresh - Invalid token', async () => {
-        const response = await request(app).post('/auth/refresh').send({ refreshToken: 'invalid' });
+    test('Refresh - Missing token', async () => {
+        const response = await request(app).post('/auth/refresh').send({});
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe('Missing refresh token');
+    });
+
+    test('Refresh - Invalid format token', async () => {
+        const response = await request(app).post('/auth/refresh').send({ refreshToken: 'not-a-jwt' });
         expect(response.status).toBe(401);
+        expect(response.body.message).toBe('Invalid refresh token');
+    });
+
+    test('Refresh - Token not in user list', async () => {
+        await request(app).post('/auth/register').send(testUser);
+        const loginRes = await request(app).post('/auth/login').send({
+            email: testUser.email,
+            password: testUser.password,
+        });
+        const refreshToken = loginRes.body.refreshToken;
+
+        // Manually remove the token from the user in DB
+        await userModel.updateOne(
+            { email: testUser.email },
+            { $set: { refreshTokens: [] } }
+        );
+
+        const response = await request(app).post('/auth/refresh').send({ refreshToken });
+        expect(response.status).toBe(401);
+        expect(response.body.message).toBe('Invalid refresh token');
+    });
+
+    test('Refresh - User not found', async () => {
+        // Generate a valid token for a non-existent user
+        const refreshTokenSecret = process.env.JWT_REFRESH_SECRET || 'refreshSecret';
+        const fakeUserId = new mongoose.Types.ObjectId();
+        const fakeToken = jwt.sign({ userId: fakeUserId.toString() }, refreshTokenSecret);
+
+        const response = await request(app).post('/auth/refresh').send({ refreshToken: fakeToken });
+        expect(response.status).toBe(401);
+        expect(response.body.message).toBe('Invalid refresh token');
+    });
+
+    test('Logout - Missing token', async () => {
+        const response = await request(app).post('/auth/logout').send({});
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe('Missing refresh token');
+    });
+
+    test('Logout - Invalid format token', async () => {
+        const response = await request(app).post('/auth/logout').send({ refreshToken: 'not-a-jwt' });
+        expect(response.status).toBe(401);
+        expect(response.body.message).toBe('Invalid refresh token');
+    });
+
+    test('Logout - Token not in user list', async () => {
+        await request(app).post('/auth/register').send(testUser);
+        const loginRes = await request(app).post('/auth/login').send({
+            email: testUser.email,
+            password: testUser.password,
+        });
+        const refreshToken = loginRes.body.refreshToken;
+
+        // Manually remove the token from the user in DB
+        await userModel.updateOne(
+            { email: testUser.email },
+            { $set: { refreshTokens: [] } }
+        );
+
+        const response = await request(app).post('/auth/logout').send({ refreshToken });
+        expect(response.status).toBe(401);
+        expect(response.body.message).toBe('Invalid refresh token');
+    });
+
+    test('Logout - User not found', async () => {
+        const refreshTokenSecret = process.env.JWT_REFRESH_SECRET || 'refreshSecret';
+        const fakeUserId = new mongoose.Types.ObjectId();
+        const fakeToken = jwt.sign({ userId: fakeUserId.toString() }, refreshTokenSecret);
+
+        const response = await request(app).post('/auth/logout').send({ refreshToken: fakeToken });
+        expect(response.status).toBe(401);
+        expect(response.body.message).toBe('Invalid refresh token');
     });
 });
+
 
