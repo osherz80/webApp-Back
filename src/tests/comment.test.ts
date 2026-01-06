@@ -11,7 +11,7 @@ let postId: string;
 let server: any;
 
 beforeAll(async () => {
-     server = app.listen(0);
+    server = app.listen(0);
 });
 
 afterAll(async () => {
@@ -30,7 +30,7 @@ describe('Comment API', () => {
         await commentModel.deleteMany({});
         await postModel.deleteMany({});
         await userModel.deleteMany({});
-        
+
         // Register and Login
         await request(app).post('/auth/register').send(testUser);
         const loginRes = await request(app).post('/auth/login').send({
@@ -66,7 +66,7 @@ describe('Comment API', () => {
     });
 
     test('Get all comments', async () => {
-         await request(app)
+        await request(app)
             .post('/comments')
             .set('Authorization', `Bearer ${accessToken}`)
             .send({
@@ -87,10 +87,61 @@ describe('Comment API', () => {
                 postId: postId
             });
         const commentId = commentRes.body._id;
-        
+
         const response = await request(app)
             .delete(`/comments/${commentId}`)
             .set('Authorization', `Bearer ${accessToken}`);
         expect(response.status).toBe(200);
     });
+    test('Get comment by id', async () => {
+        const commentRes = await request(app)
+            .post('/comments')
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({ message: 'Find me', postId });
+
+        const response = await request(app).get(`/comments/${commentRes.body._id}`);
+        expect(response.status).toBe(200);
+        expect(response.body.message).toBe('Find me');
+    });
+
+    test('Update comment', async () => {
+        const commentRes = await request(app)
+            .post('/comments')
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({ message: 'Original', postId });
+
+        const response = await request(app)
+            .put(`/comments/${commentRes.body._id}`)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({ message: 'Updated', postId });
+
+        expect(response.status).toBe(200);
+        expect(response.body.message).toBe('Updated');
+    });
+
+    test('Update comment - Not Found', async () => {
+        const fakeId = new mongoose.Types.ObjectId();
+        const response = await request(app)
+            .put(`/comments/${fakeId}`)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({ message: 'Updated', postId });
+        expect(response.status).toBe(404);
+    });
+
+    test('Delete comment - Not Found', async () => {
+        const fakeId = new mongoose.Types.ObjectId();
+        const response = await request(app)
+            .delete(`/comments/${fakeId}`)
+            .set('Authorization', `Bearer ${accessToken}`);
+        expect(response.status).toBe(404);
+    });
+    test('Create comment - Invalid Data', async () => {
+        const response = await request(app)
+            .post('/comments')
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({ message: '' });
+        expect(response.status).toBe(400);
+    });
 });
+
+

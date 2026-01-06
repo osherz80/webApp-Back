@@ -45,7 +45,7 @@ describe('Auth API', () => {
     });
 
     test('Refresh token', async () => {
-         await request(app).post('/auth/register').send(testUser);
+        await request(app).post('/auth/register').send(testUser);
         const loginRes = await request(app).post('/auth/login').send({
             email: testUser.email,
             password: testUser.password,
@@ -59,7 +59,7 @@ describe('Auth API', () => {
     });
 
     test('Logout user', async () => {
-         await request(app).post('/auth/register').send(testUser);
+        await request(app).post('/auth/register').send(testUser);
         const loginRes = await request(app).post('/auth/login').send({
             email: testUser.email,
             password: testUser.password,
@@ -68,4 +68,29 @@ describe('Auth API', () => {
         const response = await request(app).post('/auth/logout').send({ refreshToken });
         expect(response.status).toBe(200);
     });
+    test('Register - Missing fields', async () => {
+        const response = await request(app).post('/auth/register').send({ email: 'test@test.com' });
+        expect(response.status).toBe(400);
+    });
+
+    test('Register - Duplicate user', async () => {
+        await request(app).post('/auth/register').send(testUser);
+        const response = await request(app).post('/auth/register').send(testUser);
+        expect(response.status).toBe(409);
+    });
+
+    test('Login - Invalid credentials', async () => {
+        await request(app).post('/auth/register').send(testUser);
+        const response = await request(app).post('/auth/login').send({
+            email: testUser.email,
+            password: 'wrongpassword',
+        });
+        expect(response.status).toBe(401);
+    });
+
+    test('Refresh - Invalid token', async () => {
+        const response = await request(app).post('/auth/refresh').send({ refreshToken: 'invalid' });
+        expect(response.status).toBe(401);
+    });
 });
+
