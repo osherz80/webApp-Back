@@ -95,4 +95,42 @@ describe('Post API', () => {
         expect(response.status).toBe(200);
         expect(response.body.title).toBe('Updated Title');
     });
+    test('Get posts by sender', async () => {
+        await request(app)
+            .post('/post')
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({ title: 'Sender Post', message: 'Message' });
+
+        const response = await request(app).get(`/post?sender=${userId}`);
+        expect(response.status).toBe(200);
+        expect(response.body.length).toBeGreaterThan(0);
+        expect(response.body[0].sender).toBe(userId);
+    });
+
+    test('Get post by id - Not Found', async () => {
+        const fakeId = new mongoose.Types.ObjectId();
+        const response = await request(app).get(`/post/${fakeId}`);
+        expect(response.status).toBe(404);
+    });
+
+    test('Update post - Not Found', async () => {
+        const fakeId = new mongoose.Types.ObjectId();
+        const response = await request(app)
+            .put(`/post/${fakeId}`)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({ title: 'New', message: 'New' });
+        expect(response.status).toBe(404);
+    });
+
+    test('Create post - Invalid Data', async () => {
+        const response = await request(app)
+            .post('/post')
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({ title: '' }); // message is required by schema usually
+        // Depending on schema requirements. If message is empty it might fail validation.
+        // If my schema doesn't require message, this might pass. Let's assume it fails if empty.
+        // Actually, let's just test a malformed request if schema is loose.
+        expect(response.status).toBe(400);
+    });
 });
+

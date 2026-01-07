@@ -49,4 +49,20 @@ describe('User API', () => {
         expect(response.body.email).toBe(testUser.email);
         expect(response.body.password).toBeUndefined(); // Should not return password
     });
+    test('Get user by id - Not Found', async () => {
+        const fakeId = new mongoose.Types.ObjectId();
+        const response = await request(app)
+            .get(`/user/${fakeId}`)
+            .set('Authorization', `Bearer ${accessToken}`);
+        expect(response.status).toBe(404);
+        expect(response.body.message).toBe('User not found');
+    });
+
+    test('Get user by id - Invalid ID', async () => {
+        const response = await request(app)
+            .get('/user/123')
+            .set('Authorization', `Bearer ${accessToken}`);
+        expect(response.status).toBe(400);
+    });
 });
+
