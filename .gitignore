@@ -1,4 +1,7 @@
 node_modules
 .env
+dist
+*.log
 package-lock.json
-package-lock.json
+coverage/
+coverage_summary.txt
