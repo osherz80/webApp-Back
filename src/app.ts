@@ -7,10 +7,18 @@ import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpecs from './swaggerConfig';
+import cors from 'cors';
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+app.use(cors({
+    origin: 'http://localhost:5173', // כתובת מדויקת (בלי '*' ובלי סלאש בסוף)
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Middleware
 app.use(express.json());
@@ -25,7 +33,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // Basic Route
 app.get('/', (req, res) => {
-    res.send('API is running...');
+    res.send('API is running...' + process.env.GOOGLE_CLIENT_ID);
 });
 
 // Database Connection
