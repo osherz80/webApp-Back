@@ -59,24 +59,6 @@ import authMiddleware from '../middleware/authMiddleware';
 *       404:
 *         description: The user was not found
 */
-/**
-* @swagger
-* /user:
-*   get:
-*     summary: Get all users
-*     tags: [Users]
-*     responses:
-*       200:
-*         description: The list of users
-*         content:
-*           application/json:
-*             schema:
-*               type: array
-*               items:
-*                 $ref: '#/components/schemas/User'
-*/
-router.get('/', userController.getAllUsers);
-
-router.get('/:id', authMiddleware, userController.getUserById);
+router.get('/', authMiddleware, userController.getUserById);
 
 export default router;

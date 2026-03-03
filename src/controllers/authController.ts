@@ -2,26 +2,71 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import userModel from '../models/userModel';
+import { getGoogleUserInfo } from '../services/googleAuth.service';
 
 const generateTokens = (userId: string) => {
     const accessTokenSecret = process.env.JWT_SECRET || 'secret';
     const refreshTokenSecret = process.env.JWT_REFRESH_SECRET || 'refreshSecret';
-    const accessTokenExp = parseInt(process.env.JWT_EXP || '15');
-    const refreshTokenExp = parseInt(process.env.JWT_REFRESH_EXP || '7');
+    const accessTokenExp = process.env.JWT_EXP || '15m';
+    const refreshTokenExp = process.env.JWT_REFRESH_EXP || '7d';
 
     const accessToken = jwt.sign(
         { userId },
         accessTokenSecret,
-        { expiresIn: `${accessTokenExp}Minute` }
+        { expiresIn: accessTokenExp as any }
     );
 
     const refreshToken = jwt.sign(
         { userId },
         refreshTokenSecret,
-        { expiresIn: `${refreshTokenExp}Days` }
+        { expiresIn: refreshTokenExp as any }
     );
 
     return { accessToken, refreshToken };
+};
+
+const googleLogin = async (req: Request, res: Response) => {
+    const { token } = req.body;
+
+    if (!token) {
+        return res.status(400).json({ message: 'Missing Google token' });
+    }
+
+    try {
+        const { email, name, picture } = await getGoogleUserInfo(token);
+
+        let user = await userModel.findOne({ email });
+        if (!user) {
+            user = new userModel({
+                username: name,
+                email: email,
+                picture: picture,
+                password: 'google-sso'
+            });
+            await user.save();
+        }
+
+        const { accessToken, refreshToken } = generateTokens(user._id.toString());
+
+        if (!user.refreshTokens) user.refreshTokens = [];
+        user.refreshTokens.push(refreshToken);
+        await user.save();
+
+        res.status(200).json({
+            accessToken,
+            refreshToken,
+            isAuth: true,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                picture: user.picture
+            },
+        });
+    } catch (err: any) {
+        console.error('Google Auth Error:', err);
+        res.status(500).json({ message: 'Internal server error during Google authentication' });
+    }
 };
 
 const register = async (req: Request, res: Response) => {
@@ -159,5 +204,6 @@ export default {
     register,
     login,
     logout,
-    refresh
+    refresh,
+    googleLogin
 };

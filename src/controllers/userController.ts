@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import userModel from '../models/userModel';
+import { AuthRequest } from '../middleware/authMiddleware';
 
-const getUserById = async (req: Request, res: Response) => {
-    const { id } = req.params;
+const getUserById = async (req: AuthRequest, res: Response) => {
+    const userId = req?.user?._id;
     try {
         // get user without sensitive data
-        const user = await userModel.findById(id).select('-password -refreshTokens');
+        const user = await userModel.findById(userId).select('-password -refreshTokens');
         if (user) {
             res.status(200).json(user);
         } else {
@@ -16,16 +17,6 @@ const getUserById = async (req: Request, res: Response) => {
     }
 };
 
-const getAllUsers = async (req: Request, res: Response) => {
-    try {
-        const users = await userModel.find().select('-password -refreshTokens');
-        res.status(200).json(users);
-    } catch (err: any) {
-        res.status(400).json({ message: err.message });
-    }
-};
-
 export default {
     getUserById,
-    getAllUsers
 };

@@ -42,6 +42,31 @@ router.post('/register', authController.register);
 
 /**
 * @swagger
+* /auth/google-login:
+*   post:
+*     summary: Login a user with Google
+*     tags: [Auth]
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             required:
+*               - token
+*             properties:
+*               token:
+*                 type: string
+*     responses:
+*       200:
+*         description: Login successful
+*       400:
+*         description: Login failed
+*/
+router.post('/google', authController.googleLogin);
+
+/**
+* @swagger
 * /auth/login:
 *   post:
 *     summary: Login a user
