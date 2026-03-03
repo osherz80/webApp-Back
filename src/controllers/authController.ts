@@ -1,12 +1,8 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { OAuth2Client } from 'google-auth-library'; // חובה להתקין: npm install google-auth-library
 import userModel from '../models/userModel';
 import { getGoogleUserInfo } from '../services/googleAuth.service';
-
-// שימוש ב-Client ID מהסביבה שלך
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateTokens = (userId: string) => {
     const accessTokenSecret = process.env.JWT_SECRET || 'secret';
@@ -44,7 +40,7 @@ const googleLogin = async (req: Request, res: Response) => {
             user = new userModel({
                 username: name,
                 email: email,
-                avatar: picture,
+                picture: picture,
                 password: 'google-sso'
             });
             await user.save();
@@ -59,12 +55,13 @@ const googleLogin = async (req: Request, res: Response) => {
         res.status(200).json({
             accessToken,
             refreshToken,
+            isAuth: true,
             user: {
                 id: user._id,
                 username: user.username,
                 email: user.email,
-                avatar: user.avatar
-            }
+                picture: user.picture
+            },
         });
     } catch (err: any) {
         console.error('Google Auth Error:', err);
