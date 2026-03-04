@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import userModel from '../models/userModel';
+import userModel, { IUser } from '../models/userModel';
 import { getGoogleUserInfo } from '../services/googleAuth.service';
 
 const generateTokens = (userId: string) => {
@@ -21,6 +21,16 @@ const generateTokens = (userId: string) => {
         refreshTokenSecret,
         { expiresIn: refreshTokenExp as any }
     );
+
+    return { accessToken, refreshToken };
+};
+
+const setTokens = async (user: IUser) => {
+    const { accessToken, refreshToken } = generateTokens(user._id.toString());
+
+    if (!user.refreshTokens) user.refreshTokens = [];
+    user.refreshTokens.push(refreshToken);
+    await user.save();
 
     return { accessToken, refreshToken };
 };
@@ -46,18 +56,14 @@ const googleLogin = async (req: Request, res: Response) => {
             await user.save();
         }
 
-        const { accessToken, refreshToken } = generateTokens(user.id.toString());
-
-        if (!user.refreshTokens) user.refreshTokens = [];
-        user.refreshTokens.push(refreshToken);
-        await user.save();
+        const { accessToken, refreshToken } = await setTokens(user);
 
         res.status(200).json({
             accessToken,
             refreshToken,
             isAuth: true,
             user: {
-                id: user.id,
+                id: user._id,
                 username: user.username,
                 email: user.email,
                 picture: user.picture
@@ -70,10 +76,11 @@ const googleLogin = async (req: Request, res: Response) => {
 };
 
 const register = async (req: Request, res: Response) => {
-    const { username, email, password } = req.body;
+    const { email, password } = req.body;
+    const username = email.split('@')[0];
 
-    if (!username || !email || !password) {
-        res.status(400).json({ message: 'Missing username, email, or password' });
+    if (!email || !password) {
+        res.status(400).json({ message: 'Missing email or password' });
         return;
     }
 
@@ -81,17 +88,29 @@ const register = async (req: Request, res: Response) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newUser = new userModel({
+        const user = new userModel({
             username,
             email,
             password: hashedPassword,
         });
+        await user.save();
 
-        await newUser.save();
-        res.status(201).json({ message: 'User registered successfully', userId: newUser._id });
+        const { accessToken, refreshToken } = await setTokens(user);
+
+        res.status(200).json({
+            accessToken,
+            refreshToken,
+            isAuth: true,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                picture: user.picture
+            },
+        });
     } catch (err: any) {
         if (err.code === 11000) {
-            res.status(409).json({ message: 'Username or email already exists' });
+            res.status(409).json({ message: 'Email already exists' });
         } else {
             res.status(400).json({ message: err.message });
         }
@@ -119,19 +138,18 @@ const login = async (req: Request, res: Response) => {
             return;
         }
 
-        const { accessToken, refreshToken } = generateTokens(user._id.toString());
-
-        // Save refresh token to user model
-        if (!user.refreshTokens) {
-            user.refreshTokens = [];
-        }
-        user.refreshTokens.push(refreshToken);
-        await user.save();
+        const { accessToken, refreshToken } = await setTokens(user);
 
         res.status(200).json({
             accessToken,
             refreshToken,
-            userId: user._id
+            isAuth: true,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                picture: user.picture
+            },
         });
     } catch (err: any) {
         res.status(400).json({ message: err.message });
