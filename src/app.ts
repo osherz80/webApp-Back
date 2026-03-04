@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import postRoutes from './routes/postRoutes';
@@ -8,6 +8,8 @@ import userRoutes from './routes/userRoutes';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpecs from './swaggerConfig';
 import cors from 'cors';
+import path from 'path';
+
 dotenv.config();
 
 const app = express();
@@ -23,6 +25,9 @@ app.use(cors({
 // Middleware
 app.use(express.json());
 
+// Serve static files
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+
 // Routes
 app.use('/post', postRoutes);
 app.use('/comments', commentRoutes);
@@ -33,14 +38,14 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // Basic Route
 app.get('/', (req, res) => {
-    res.send('API is running...' + process.env.GOOGLE_CLIENT_ID);
+    res.send('API is running...' + (process.env.GOOGLE_CLIENT_ID || ''));
 });
 
 // Database Connection
 const mongoUri = process.env.MONGO_URI;
 
 if (!mongoUri) {
-    console.error('mongoUri is bad exiting');
+    console.error('mongoUri is missing in .env');
     process.exit(1);
 }
 
