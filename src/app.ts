@@ -5,10 +5,12 @@ import postRoutes from './routes/postRoutes';
 import commentRoutes from './routes/commentRoutes';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
+import fileRoutes from './routes/fileRoutes';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpecs from './swaggerConfig';
 import cors from 'cors';
 import path from 'path';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
@@ -24,6 +26,7 @@ app.use(cors({
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser());
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
@@ -33,6 +36,7 @@ app.use('/post', postRoutes);
 app.use('/comments', commentRoutes);
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
+app.use('/file', fileRoutes);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 

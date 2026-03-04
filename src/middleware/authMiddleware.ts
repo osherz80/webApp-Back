@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 export interface AuthRequest extends Request {
     user?: {
-        _id: string;
+        id: string;
     };
 }
 
@@ -24,7 +24,7 @@ const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => 
     try {
         const secret = process.env.JWT_SECRET || 'secret';
         const decoded = jwt.verify(token, secret) as { userId: string };
-        req.user = { _id: decoded.userId };
+        req.user = { id: decoded.userId };
         next();
     } catch (err) {
         res.status(401).json({ message: 'Unauthorized, invalid token' });
