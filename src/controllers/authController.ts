@@ -46,7 +46,7 @@ const googleLogin = async (req: Request, res: Response) => {
             await user.save();
         }
 
-        const { accessToken, refreshToken } = generateTokens(user._id.toString());
+        const { accessToken, refreshToken } = generateTokens(user.id.toString());
 
         if (!user.refreshTokens) user.refreshTokens = [];
         user.refreshTokens.push(refreshToken);
@@ -57,7 +57,7 @@ const googleLogin = async (req: Request, res: Response) => {
             refreshToken,
             isAuth: true,
             user: {
-                id: user._id,
+                id: user.id,
                 username: user.username,
                 email: user.email,
                 picture: user.picture
