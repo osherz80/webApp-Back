@@ -7,6 +7,7 @@ const getUserById = async (req: AuthRequest, res: Response) => {
     try {
         // get user without sensitive data
         const user = await userModel.findById(userId).select('_id username email picture');
+
         if (user) {
             const { _id, username, email, picture } = user;
             res.status(200).json({ id: _id, username, email, picture, isAuth: true });
