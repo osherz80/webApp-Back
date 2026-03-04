@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import userModel from '../models/userModel';
+import userModel, { IUser } from '../models/userModel';
 import { getGoogleUserInfo } from '../services/googleAuth.service';
 
 const generateTokens = (userId: string) => {
@@ -25,6 +25,36 @@ const generateTokens = (userId: string) => {
     return { accessToken, refreshToken };
 };
 
+const setTokens = async (user: IUser) => {
+    const { accessToken, refreshToken } = generateTokens(user._id.toString());
+
+    if (!user.refreshTokens) user.refreshTokens = [];
+    user.refreshTokens.push(refreshToken);
+    await user.save();
+
+    return { accessToken, refreshToken };
+};
+
+const sendAuthResponse = (res: Response, user: any, accessToken: string, refreshToken: string) => {
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    res.status(200).json({
+        accessToken,
+        isAuth: true,
+        user: {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            picture: user.picture
+        },
+    });
+};
+
 const googleLogin = async (req: Request, res: Response) => {
     const { token } = req.body;
 
@@ -46,23 +76,9 @@ const googleLogin = async (req: Request, res: Response) => {
             await user.save();
         }
 
-        const { accessToken, refreshToken } = generateTokens(user._id.toString());
+        const { accessToken, refreshToken } = await setTokens(user);
 
-        if (!user.refreshTokens) user.refreshTokens = [];
-        user.refreshTokens.push(refreshToken);
-        await user.save();
-
-        res.status(200).json({
-            accessToken,
-            refreshToken,
-            isAuth: true,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                picture: user.picture
-            },
-        });
+        sendAuthResponse(res, user, accessToken, refreshToken);
     } catch (err: any) {
         console.error('Google Auth Error:', err);
         res.status(500).json({ message: 'Internal server error during Google authentication' });
@@ -70,10 +86,11 @@ const googleLogin = async (req: Request, res: Response) => {
 };
 
 const register = async (req: Request, res: Response) => {
-    const { username, email, password } = req.body;
+    const { email, password } = req.body;
+    const username = email.split('@')[0];
 
-    if (!username || !email || !password) {
-        res.status(400).json({ message: 'Missing username, email, or password' });
+    if (!email || !password) {
+        res.status(400).json({ message: 'Missing email or password' });
         return;
     }
 
@@ -81,17 +98,19 @@ const register = async (req: Request, res: Response) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newUser = new userModel({
+        const user = new userModel({
             username,
             email,
             password: hashedPassword,
         });
+        await user.save();
 
-        await newUser.save();
-        res.status(201).json({ message: 'User registered successfully', userId: newUser._id });
+        const { accessToken, refreshToken } = await setTokens(user);
+
+        sendAuthResponse(res, user, accessToken, refreshToken);
     } catch (err: any) {
         if (err.code === 11000) {
-            res.status(409).json({ message: 'Username or email already exists' });
+            res.status(409).json({ message: 'Email already exists' });
         } else {
             res.status(400).json({ message: err.message });
         }
@@ -119,27 +138,16 @@ const login = async (req: Request, res: Response) => {
             return;
         }
 
-        const { accessToken, refreshToken } = generateTokens(user._id.toString());
+        const { accessToken, refreshToken } = await setTokens(user);
 
-        // Save refresh token to user model
-        if (!user.refreshTokens) {
-            user.refreshTokens = [];
-        }
-        user.refreshTokens.push(refreshToken);
-        await user.save();
-
-        res.status(200).json({
-            accessToken,
-            refreshToken,
-            userId: user._id
-        });
+        sendAuthResponse(res, user, accessToken, refreshToken);
     } catch (err: any) {
         res.status(400).json({ message: err.message });
     }
 };
 
 const logout = async (req: Request, res: Response) => {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies?.refreshToken;
 
     if (!refreshToken) {
         res.status(400).json({ message: 'Missing refresh token' });
@@ -159,6 +167,12 @@ const logout = async (req: Request, res: Response) => {
         user.refreshTokens = user.refreshTokens.filter(token => token !== refreshToken);
         await user.save();
 
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict'
+        });
+
         res.status(200).json({ message: 'Logged out successfully' });
     } catch (err: any) {
         res.status(401).json({ message: 'Invalid refresh token' });
@@ -166,7 +180,7 @@ const logout = async (req: Request, res: Response) => {
 };
 
 const refresh = async (req: Request, res: Response) => {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies?.refreshToken;
 
     if (!refreshToken) {
         res.status(400).json({ message: 'Missing refresh token' });
@@ -190,11 +204,7 @@ const refresh = async (req: Request, res: Response) => {
         user.refreshTokens.push(newRefreshToken);
         await user.save();
 
-        res.status(200).json({
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken,
-            userId: user._id
-        });
+        sendAuthResponse(res, user, newAccessToken, newRefreshToken);
     } catch (err: any) {
         res.status(401).json({ message: 'Invalid refresh token' });
     }
