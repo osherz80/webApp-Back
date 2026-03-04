@@ -99,17 +99,6 @@ router.post('/login', authController.login);
 *   post:
 *     summary: Logout a user
 *     tags: [Auth]
-*     requestBody:
-*       required: true
-*       content:
-*         application/json:
-*           schema:
-*             type: object
-*             required:
-*               - refreshToken
-*             properties:
-*               refreshToken:
-*                 type: string
 *     responses:
 *       200:
 *         description: Logout successful
@@ -124,17 +113,6 @@ router.post('/logout', authController.logout);
 *   post:
 *     summary: Refresh access token
 *     tags: [Auth]
-*     requestBody:
-*       required: true
-*       content:
-*         application/json:
-*           schema:
-*             type: object
-*             required:
-*               - refreshToken
-*             properties:
-*               refreshToken:
-*                 type: string
 *     responses:
 *       200:
 *         description: Token refreshed

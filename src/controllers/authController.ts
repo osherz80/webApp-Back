@@ -35,6 +35,26 @@ const setTokens = async (user: IUser) => {
     return { accessToken, refreshToken };
 };
 
+const sendAuthResponse = (res: Response, user: any, accessToken: string, refreshToken: string) => {
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    res.status(200).json({
+        accessToken,
+        isAuth: true,
+        user: {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            picture: user.picture
+        },
+    });
+};
+
 const googleLogin = async (req: Request, res: Response) => {
     const { token } = req.body;
 
@@ -58,17 +78,7 @@ const googleLogin = async (req: Request, res: Response) => {
 
         const { accessToken, refreshToken } = await setTokens(user);
 
-        res.status(200).json({
-            accessToken,
-            refreshToken,
-            isAuth: true,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                picture: user.picture
-            },
-        });
+        sendAuthResponse(res, user, accessToken, refreshToken);
     } catch (err: any) {
         console.error('Google Auth Error:', err);
         res.status(500).json({ message: 'Internal server error during Google authentication' });
@@ -97,17 +107,7 @@ const register = async (req: Request, res: Response) => {
 
         const { accessToken, refreshToken } = await setTokens(user);
 
-        res.status(200).json({
-            accessToken,
-            refreshToken,
-            isAuth: true,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                picture: user.picture
-            },
-        });
+        sendAuthResponse(res, user, accessToken, refreshToken);
     } catch (err: any) {
         if (err.code === 11000) {
             res.status(409).json({ message: 'Email already exists' });
@@ -140,24 +140,14 @@ const login = async (req: Request, res: Response) => {
 
         const { accessToken, refreshToken } = await setTokens(user);
 
-        res.status(200).json({
-            accessToken,
-            refreshToken,
-            isAuth: true,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                picture: user.picture
-            },
-        });
+        sendAuthResponse(res, user, accessToken, refreshToken);
     } catch (err: any) {
         res.status(400).json({ message: err.message });
     }
 };
 
 const logout = async (req: Request, res: Response) => {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies?.refreshToken;
 
     if (!refreshToken) {
         res.status(400).json({ message: 'Missing refresh token' });
@@ -177,6 +167,12 @@ const logout = async (req: Request, res: Response) => {
         user.refreshTokens = user.refreshTokens.filter(token => token !== refreshToken);
         await user.save();
 
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict'
+        });
+
         res.status(200).json({ message: 'Logged out successfully' });
     } catch (err: any) {
         res.status(401).json({ message: 'Invalid refresh token' });
@@ -184,7 +180,7 @@ const logout = async (req: Request, res: Response) => {
 };
 
 const refresh = async (req: Request, res: Response) => {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies?.refreshToken;
 
     if (!refreshToken) {
         res.status(400).json({ message: 'Missing refresh token' });
@@ -208,11 +204,7 @@ const refresh = async (req: Request, res: Response) => {
         user.refreshTokens.push(newRefreshToken);
         await user.save();
 
-        res.status(200).json({
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken,
-            userId: user._id
-        });
+        sendAuthResponse(res, user, newAccessToken, newRefreshToken);
     } catch (err: any) {
         res.status(401).json({ message: 'Invalid refresh token' });
     }
