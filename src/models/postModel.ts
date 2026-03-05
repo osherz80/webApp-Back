@@ -1,26 +1,53 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IPost extends Document {
-    message: string;
+    bookTitle: string;
+    bookAuthor: string;
+    bookDescription?: string;
+    bookImage?: string;
+    userImage?: string;
+    recommendation: string;
+    rating: number;
     sender: Types.ObjectId;
-    title?: string;
     createdAt: Date;
     updatedAt: Date;
 }
 
 const postSchema = new Schema<IPost>({
-    message: {
+    bookTitle: {
         type: String,
         required: true
+    },
+    bookAuthor: {
+        type: String,
+        required: true
+    },
+    bookDescription: {
+        type: String,
+        required: false
+    },
+    bookImage: {
+        type: String,
+        required: false
+    },
+    userImage: {
+        type: String,
+        required: false
+    },
+    recommendation: {
+        type: String,
+        required: true
+    },
+    rating: {
+        type: Number,
+        required: true,
+        min: 1,
+        max: 5
     },
     sender: {
         type: Schema.Types.ObjectId,
         ref: 'User',
         required: true
-    },
-    title: {
-        type: String,
-        required: false
     }
 }, {
     timestamps: true
