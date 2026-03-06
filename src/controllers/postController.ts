@@ -55,7 +55,7 @@ const getAllPosts = async (req: Request, res: Response) => {
 const getPostById = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     try {
-        const post = await postModel.findById(id);
+        const post = await postModel.findById(id).populate('sender', 'username picture');
         if (post) {
             res.status(200).json(post);
         } else {
@@ -68,27 +68,35 @@ const getPostById = async (req: AuthRequest, res: Response) => {
 
 const updatePost = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
-    const { message, title } = req.body;
-    const sender = req.user?.id;
+    const { bookTitle, bookAuthor, bookDescription, bookImage, userImage, recommendation, rating } = req.body;
+    const senderId = req.user?.id;
+
     try {
+        const post = await postModel.findById(id);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        if (post.sender.toString() !== senderId?.toString()) {
+            return res.status(403).json({ message: 'Unauthorized to update this post' });
+        }
+
         const updatedPost = await postModel.findByIdAndUpdate(
             id,
-            { message, sender, title },
+            { bookTitle, bookAuthor, bookDescription, bookImage, userImage, recommendation, rating },
             { new: true, runValidators: true }
         );
-        if (updatedPost) {
         res.status(200).json(updatedPost);
-        } else {
-            res.status(404).json({ message: 'Post not found' });
-        }
     } catch (err: any) {
         res.status(400).json({ message: err.message });
     }
 };
 
+
+
 export default {
     addPost,
     getAllPosts,
     getPostById,
-    updatePost
+    updatePost,
 };
