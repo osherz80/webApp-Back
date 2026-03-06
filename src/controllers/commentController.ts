@@ -4,7 +4,7 @@ import commentModel from '../models/commentModel';
 
 const addComment = async (req: AuthRequest, res: Response) => {
     const { message, postId } = req.body;
-    const sender = req.user?._id;
+    const sender = req.user?.id;
     try {
         const newComment = new commentModel({
             message,
@@ -19,16 +19,14 @@ const addComment = async (req: AuthRequest, res: Response) => {
 };
 
 const getAllComments = async (req: Request, res: Response) => {
-    const filter = req.query;
+    const { postId } = req.query;
     try {
-        if (filter['postId']) {
-            const postId = filter['postId'] as string
-            const comments = await commentModel.find({ postId });
-            res.status(200).json(comments);
-        } else {
-            const comments = await commentModel.find();
-            res.status(200).json(comments);
+        if (!postId) {
+            res.status(400).json({ message: 'postId is required' } as any);
+            return;
         }
+        const comments = await commentModel.find({ postId }).populate('sender', 'username picture');
+        res.status(200).json(comments);
     } catch (err: any) {
         res.status(400).json({ message: err.message });
     }
@@ -51,7 +49,7 @@ const getCommentById = async (req: Request, res: Response) => {
 const updateComment = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { message, postId } = req.body;
-    const sender = req.user?._id;
+    const sender = req.user?.id;
     try {
         const updatedComment = await commentModel.findByIdAndUpdate(
             id,
