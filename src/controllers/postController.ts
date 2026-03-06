@@ -24,16 +24,29 @@ const addPost = async (req: AuthRequest, res: Response) => {
 };
 
 const getAllPosts = async (req: Request, res: Response) => {
-    const filter = req.query;
+    const { sender, page = 1, limit = 10 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
     try {
-        if (filter['sender']) {
-            const sender = filter['sender'] as string
-            const posts = await postModel.find({ sender });
-            res.status(200).json(posts);
-        } else {
-            const posts = await postModel.find();
-            res.status(200).json(posts);
+        const query: any = {};
+        if (sender) {
+            query.sender = sender;
         }
+
+        const posts = await postModel.find(query)
+            .populate('sender', 'username picture')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(Number(limit));
+
+        const total = await postModel.countDocuments(query);
+
+        res.status(200).json({
+            posts,
+            currentPage: Number(page),
+            totalPages: Math.ceil(total / Number(limit)),
+            totalPosts: total
+        });
     } catch (err: any) {
         res.status(400).json({ message: err.message });
     }
