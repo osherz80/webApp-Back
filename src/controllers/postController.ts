@@ -3,13 +3,18 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import postModel from '../models/postModel';
 
 const addPost = async (req: AuthRequest, res: Response) => {
-    const { message, title } = req.body;
-    const sender = req.user?._id;
+    const { bookTitle, bookAuthor, bookDescription, bookImage, userImage, recommendation, rating } = req.body;
+    const sender = req.user?.id;
     try {
         const newPost = new postModel({
-            message,
+            bookTitle,
+            bookAuthor,
+            bookDescription,
+            bookImage,
+            userImage,
+            recommendation,
+            rating,
             sender,
-            title
         });
         const savedPost = await newPost.save();
         res.status(201).json(savedPost);
@@ -51,7 +56,7 @@ const getPostById = async (req: AuthRequest, res: Response) => {
 const updatePost = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { message, title } = req.body;
-    const sender = req.user?._id;
+    const sender = req.user?.id;
     try {
         const updatedPost = await postModel.findByIdAndUpdate(
             id,
@@ -59,7 +64,7 @@ const updatePost = async (req: AuthRequest, res: Response) => {
             { new: true, runValidators: true }
         );
         if (updatedPost) {
-            res.status(200).json(updatedPost);
+        res.status(200).json(updatedPost);
         } else {
             res.status(404).json({ message: 'Post not found' });
         }

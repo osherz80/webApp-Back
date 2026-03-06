@@ -17,27 +17,48 @@ import authMiddleware from '../middleware/authMiddleware';
 *     Post:
 *       type: object
 *       required:
-*         - title
-*         - message
+*         - bookTitle
+*         - bookAuthor
+*         - recommendation
+*         - rating
 *         - sender
 *       properties:
 *         _id:
 *           type: string
 *           description: The auto-generated id of the post
-*         title:
+*         bookTitle:
 *           type: string
-*           description: The title of the post
-*         message:
+*           description: The title of the book
+*         bookAuthor:
 *           type: string
-*           description: The message of the post
+*           description: The author of the book
+*         bookDescription:
+*           type: string
+*           description: The description of the book
+*         bookImage:
+*           type: string
+*           description: URL of the book image from Google Books
+*         userImage:
+*           type: string
+*           description: URL of the user-uploaded book image
+*         recommendation:
+*           type: string
+*           description: User's recommendation/review
+*         rating:
+*           type: number
+*           description: User's rating (1-5)
 *         sender:
-*           type: string
-*           description: The sender id
+*           $ref: '#/components/schemas/User'
 *       example:
-*         _id: 23423432423
-*         title: My First Post
-*         message: Hello World
-*         sender: 23423432423
+*         _id: 642f1b2b3c4d5e6f7a8b9c0d
+*         bookTitle: The Great Gatsby
+*         bookAuthor: F. Scott Fitzgerald
+*         bookDescription: A classic novel about the American Dream.
+*         bookImage: https://books.google.com/image.jpg
+*         userImage: uploads/my-book-cover.jpg
+*         recommendation: A must-read for everyone!
+*         rating: 5
+*         sender: 642f1b2b3c4d5e6f7a8b9c0e
 */
 
 /**
@@ -55,13 +76,25 @@ import authMiddleware from '../middleware/authMiddleware';
 *           schema:
 *             type: object
 *             required:
-*               - title
-*               - message
+*               - bookTitle
+*               - bookAuthor
+*               - recommendation
+*               - rating
 *             properties:
-*               title:
+*               bookTitle:
 *                 type: string
-*               message:
+*               bookAuthor:
 *                 type: string
+*               bookDescription:
+*                 type: string
+*               bookImage:
+*                 type: string
+*               userImage:
+*                 type: string
+*               recommendation:
+*                 type: string
+*               rating:
+*                 type: number
 *     responses:
 *       201:
 *         description: The post was created
@@ -78,23 +111,44 @@ router.post('/', authMiddleware, postController.addPost);
 * @swagger
 * /post:
 *   get:
-*     summary: Get all posts
+*     summary: Get all posts with pagination
 *     tags: [Posts]
 *     parameters:
 *       - in: query
 *         name: sender
 *         schema:
 *           type: string
-*         description: The sender id
+*         description: Filter by sender id
+*       - in: query
+*         name: page
+*         schema:
+*           type: number
+*           default: 1
+*         description: Page number for pagination
+*       - in: query
+*         name: limit
+*         schema:
+*           type: number
+*           default: 10
+*         description: Number of posts per page
 *     responses:
 *       200:
-*         description: The list of posts
+*         description: The list of posts with pagination info
 *         content:
 *           application/json:
 *             schema:
-*               type: array
-*               items:
-*                 $ref: '#/components/schemas/Post'
+*               type: object
+*               properties:
+*                 posts:
+*                   type: array
+*                   items:
+*                     $ref: '#/components/schemas/Post'
+*                 currentPage:
+*                   type: number
+*                 totalPages:
+*                   type: number
+*                 totalPosts:
+*                   type: number
 */
 router.get('/', postController.getAllPosts);
 
@@ -145,10 +199,20 @@ router.get('/:id', postController.getPostById);
 *           schema:
 *             type: object
 *             properties:
-*               title:
+*               bookTitle:
 *                 type: string
-*               message:
+*               bookAuthor:
 *                 type: string
+*               bookDescription:
+*                 type: string
+*               bookImage:
+*                 type: string
+*               userImage:
+*                 type: string
+*               recommendation:
+*                 type: string
+*               rating:
+*                 type: number
 *     responses:
 *       200:
 *         description: The post was updated
@@ -158,7 +222,34 @@ router.get('/:id', postController.getPostById);
 *               $ref: '#/components/schemas/Post'
 *       404:
 *         description: The post was not found
+*       403:
+*         description: Unauthorized to update this post
 */
 router.put('/:id', authMiddleware, postController.updatePost);
+
+/**
+* @swagger
+* /post/{id}:
+*   delete:
+*     summary: Delete the post by id
+*     tags: [Posts]
+*     security:
+*       - bearerAuth: []
+*     parameters:
+*       - in: path
+*         name: id
+*         schema:
+*           type: string
+*         required: true
+*         description: The post id
+*     responses:
+*       200:
+*         description: The post was deleted
+*       404:
+*         description: The post was not found
+*       403:
+*         description: Unauthorized to delete this post
+*/
+router.delete('/:id', authMiddleware, postController.deletePost);
 
 export default router;
