@@ -5,4 +5,5 @@ dist
 package-lock.json
 coverage/
 coverage_summary.txt
-public/uploads/
+public/uploads/*
+!public/uploads/.gitkeep

@@ -1,5 +1,6 @@
 ﻿import express from 'express';
 import mongoose from 'mongoose';
+import fs from 'fs';
 import dotenv from 'dotenv';
 import postRoutes from './routes/postRoutes';
 import commentRoutes from './routes/commentRoutes';
@@ -28,8 +29,14 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// Create uploads directory if it doesn't exist
+const uploadDir = path.join(__dirname, '../public/uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 // Serve static files
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+app.use('/uploads', express.static(uploadDir));
 
 // Routes
 app.use('/post', postRoutes);
