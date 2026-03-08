@@ -1,6 +1,6 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+const express = require("express");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
 
 dotenv.config();
 
@@ -11,26 +11,26 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 
 // Routes
-const postRoutes = require('./routes/postRoutes');
-app.use('/post', postRoutes);
+const postRoutes = require("./routes/postRoutes");
+app.use("/post", postRoutes);
 
-const commentRoutes = require('./routes/commentRoutes');
-app.use('/comments', commentRoutes);
+const commentRoutes = require("./routes/commentRoutes");
+app.use("/comments", commentRoutes);
 
 // Basic Route
-app.get('/', (req, res) => {
-    res.send('API is running...');
+app.get("/", (req, res) => {
+  res.send("API is running...");
 });
-
+console.log("1");
 // Database Connection
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log('Connected to MongoDB');
-        app.listen(port, () => {
-            console.log(`Server is running on port ${port}`);
-        });
-    })
-    .catch((err) => {
-        console.error('Could not connect to MongoDB', err);
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("Connected to MongoDB");
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
     });
-    
+  })
+  .catch((err) => {
+    console.error("Could not connect to MongoDB", err);
+  });
