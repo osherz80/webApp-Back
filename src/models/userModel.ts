@@ -32,7 +32,7 @@ const userSchema = new Schema<IUser>({
         type: String,
         required: false,
         default: '',
-        maxlength: 200
+        maxlength: 50
     },
     refreshTokens: {
         type: [String],
