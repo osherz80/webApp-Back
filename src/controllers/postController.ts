@@ -34,7 +34,7 @@ const getAllPosts = async (req: Request, res: Response) => {
         }
 
         const posts = await postModel.find(query)
-            .populate('sender', 'username picture')
+            .populate('sender', 'username profilePicture')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(Number(limit));
@@ -55,7 +55,7 @@ const getAllPosts = async (req: Request, res: Response) => {
 const getPostById = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     try {
-        const post = await postModel.findById(id).populate('sender', 'username picture');
+        const post = await postModel.findById(id).populate('sender', 'username profilePicture');
         if (post) {
             res.status(200).json(post);
         } else {

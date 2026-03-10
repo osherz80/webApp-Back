@@ -61,4 +61,29 @@ import authMiddleware from '../middleware/authMiddleware';
 */
 router.get('/', authMiddleware, userController.getUserById);
 
+/**
+* @swagger
+* /user/update:
+*   put:
+*     summary: Update the user by id
+*     tags: [Users]
+*     parameters:
+*       - in: path
+*         name: id
+*         schema:
+*           type: string
+*         required: true
+*         description: The user id
+*     responses:
+*       200:
+*         description: The user description by id
+*         content:
+*           application/json:
+*             schema:
+*               $ref: '#/components/schemas/User'
+*       404:
+*         description: The user was not found
+*/
+router.put('/update', authMiddleware, userController.updateUser);
+
 export default router;

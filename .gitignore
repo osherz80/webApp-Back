@@ -7,3 +7,4 @@ coverage/
 coverage_summary.txt
 public/uploads/*
 !public/uploads/.gitkeep
+.agent

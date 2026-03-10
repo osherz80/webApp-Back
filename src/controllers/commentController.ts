@@ -25,7 +25,7 @@ const getAllComments = async (req: Request, res: Response) => {
             res.status(400).json({ message: 'postId is required' } as any);
             return;
         }
-        const comments = await commentModel.find({ postId }).populate('sender', 'username picture');
+        const comments = await commentModel.find({ postId }).populate('sender', 'username profilePicture');
         res.status(200).json(comments);
     } catch (err: any) {
         res.status(400).json({ message: err.message });

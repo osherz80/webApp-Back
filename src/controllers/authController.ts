@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import userModel, { IUser } from '../models/userModel';
 import { getGoogleUserInfo } from '../services/googleAuth.service';
+import { UserDto } from '../dtos/user.dto';
 
 const generateTokens = (userId: string) => {
     const accessTokenSecret = process.env.JWT_SECRET || 'secret';
@@ -35,7 +36,7 @@ const setTokens = async (user: IUser) => {
     return { accessToken, refreshToken };
 };
 
-const sendAuthResponse = (res: Response, user: any, accessToken: string, refreshToken: string) => {
+const sendAuthResponse = (res: Response, user: UserDto, accessToken: string, refreshToken: string) => {
     res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -46,12 +47,7 @@ const sendAuthResponse = (res: Response, user: any, accessToken: string, refresh
     res.status(200).json({
         accessToken,
         isAuth: true,
-        user: {
-            id: user._id,
-            username: user.username,
-            email: user.email,
-            picture: user.picture
-        },
+        user
     });
 };
 
@@ -63,14 +59,14 @@ const googleLogin = async (req: Request, res: Response) => {
     }
 
     try {
-        const { email, name, picture } = await getGoogleUserInfo(token);
+        const { email, name, profilePicture } = await getGoogleUserInfo(token);
 
         let user = await userModel.findOne({ email });
         if (!user) {
             user = new userModel({
                 username: name,
                 email: email,
-                picture: picture,
+                profilePicture: profilePicture,
                 password: 'google-sso'
             });
             await user.save();
@@ -78,7 +74,7 @@ const googleLogin = async (req: Request, res: Response) => {
 
         const { accessToken, refreshToken } = await setTokens(user);
 
-        sendAuthResponse(res, user, accessToken, refreshToken);
+        sendAuthResponse(res, new UserDto(user), accessToken, refreshToken);
     } catch (err: any) {
         console.error('Google Auth Error:', err);
         res.status(500).json({ message: 'Internal server error during Google authentication' });
@@ -107,7 +103,7 @@ const register = async (req: Request, res: Response) => {
 
         const { accessToken, refreshToken } = await setTokens(user);
 
-        sendAuthResponse(res, user, accessToken, refreshToken);
+        sendAuthResponse(res, new UserDto(user), accessToken, refreshToken);
     } catch (err: any) {
         if (err.code === 11000) {
             res.status(409).json({ message: 'Email already exists' });
@@ -140,7 +136,7 @@ const login = async (req: Request, res: Response) => {
 
         const { accessToken, refreshToken } = await setTokens(user);
 
-        sendAuthResponse(res, user, accessToken, refreshToken);
+        sendAuthResponse(res, new UserDto(user), accessToken, refreshToken);
     } catch (err: any) {
         res.status(400).json({ message: err.message });
     }
@@ -204,7 +200,7 @@ const refresh = async (req: Request, res: Response) => {
         user.refreshTokens.push(newRefreshToken);
         await user.save();
 
-        sendAuthResponse(res, user, newAccessToken, newRefreshToken);
+        sendAuthResponse(res, new UserDto(user), newAccessToken, newRefreshToken);
     } catch (err: any) {
         res.status(401).json({ message: 'Invalid refresh token' });
     }
