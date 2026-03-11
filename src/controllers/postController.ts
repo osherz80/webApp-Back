@@ -113,10 +113,36 @@ const deletePost = async (req: AuthRequest, res: Response) => {
     }
 };
 
+const getPostsByUserId = async (req: Request, res: Response) => {
+    const { userId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    try {
+        const posts = await postModel.find({ sender: userId })
+            .populate('sender', 'username profilePicture')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(Number(limit));
+
+        const total = await postModel.countDocuments({ sender: userId });
+
+        res.status(200).json({
+            posts,
+            currentPage: Number(page),
+            totalPages: Math.ceil(total / Number(limit)),
+            totalPosts: total
+        });
+    } catch (err: any) {
+        res.status(400).json({ message: err.message });
+    }
+};
+
 export default {
     addPost,
     getAllPosts,
     getPostById,
+    getPostsByUserId,
     updatePost,
     deletePost
 };
