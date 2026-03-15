@@ -179,6 +179,54 @@ router.get('/:id', postController.getPostById);
 
 /**
 * @swagger
+* /post/user/{userId}:
+*   get:
+*     summary: Get all posts by a specific user with pagination
+*     tags: [Posts]
+*     parameters:
+*       - in: path
+*         name: userId
+*         schema:
+*           type: string
+*         required: true
+*         description: The user id
+*       - in: query
+*         name: page
+*         schema:
+*           type: number
+*           default: 1
+*         description: Page number for pagination
+*       - in: query
+*         name: limit
+*         schema:
+*           type: number
+*           default: 10
+*         description: Number of posts per page
+*     responses:
+*       200:
+*         description: The list of posts for the specific user with pagination info
+*         content:
+*           application/json:
+*             schema:
+*               type: object
+*               properties:
+*                 posts:
+*                   type: array
+*                   items:
+*                     $ref: '#/components/schemas/Post'
+*                 currentPage:
+*                   type: number
+*                 totalPages:
+*                   type: number
+*                 totalPosts:
+*                   type: number
+*       400:
+*         description: Error retrieving posts
+*/
+router.get('/user/:userId', postController.getPostsByUserId);
+
+/**
+* @swagger
 * /post/{id}:
 *   put:
 *     summary: Update the post by id
