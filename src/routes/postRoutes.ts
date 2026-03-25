@@ -105,6 +105,50 @@ import authMiddleware from '../middleware/authMiddleware';
 *       400:
 *         description: Post creation failed
 */
+/**
+* @swagger
+* /post/ai-recommendation:
+*   get:
+*     summary: Get AI-generated book recommendations based on user's last posts
+*     tags: [Posts]
+*     security:
+*       - bearerAuth: []
+*     responses:
+*       200:
+*         description: A JSON object containing AI-generated recommendations in Google Books format
+*         content:
+*           application/json:
+*             schema:
+*               type: object
+*               properties:
+*                 items:
+*                   type: array
+*                   items:
+*                     type: object
+*                     properties:
+*                       volumeInfo:
+*                         type: object
+*                         properties:
+*                           title:
+*                             type: string
+*                           authors:
+*                             type: array
+*                             items:
+*                               type: string
+*                           description:
+*                             type: string
+*                           imageLinks:
+*                             type: object
+*                             properties:
+*                               thumbnail:
+*                                 type: string
+*       401:
+*         description: Unauthorized
+*       500:
+*         description: Gemini API configuration error or failure
+*/
+router.get('/ai-recommendation', authMiddleware, postController.getAiRecommendation);
+
 router.post('/', authMiddleware, postController.addPost);
 
 /**

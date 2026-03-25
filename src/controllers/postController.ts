@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import postModel from '../models/postModel';
+import { generateBookRecommendations } from '../utils/geminiService';
 
 const addPost = async (req: AuthRequest, res: Response) => {
     const { bookTitle, bookAuthor, bookDescription, bookImage, userImage, recommendation, rating } = req.body;
@@ -138,11 +139,35 @@ const getPostsByUserId = async (req: Request, res: Response) => {
     }
 };
 
+const getAiRecommendation = async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        const lastPosts = await postModel.find({ sender: userId })
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .select('bookTitle bookAuthor recommendation');
+
+        const bookContext = lastPosts.map(p => `- "${p.bookTitle}" by ${p.bookAuthor} (Recommendation: ${p.recommendation})`).join('\n');
+
+        const recommendations = await generateBookRecommendations(bookContext);
+        res.status(200).json(recommendations);
+
+    } catch (err: any) {
+        console.error('Gemini Recommendation Error:', err);
+        res.status(500).json({ message: err.message });
+    }
+};
+
 export default {
     addPost,
     getAllPosts,
     getPostById,
     getPostsByUserId,
     updatePost,
-    deletePost
+    deletePost,
+    getAiRecommendation
 };
