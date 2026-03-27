@@ -7,6 +7,7 @@ export interface IUser extends Document {
     profilePicture?: string;
     bio?: string;
     refreshTokens: string[];
+    suggestedBooks: string[];
 }
 
 const userSchema = new Schema<IUser>({
@@ -35,6 +36,10 @@ const userSchema = new Schema<IUser>({
         maxlength: 100
     },
     refreshTokens: {
+        type: [String],
+        default: []
+    },
+    suggestedBooks: {
         type: [String],
         default: []
     }
