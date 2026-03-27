@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import postModel from '../models/postModel';
+import userModel from '../models/userModel';
+import { generateBookRecommendations } from '../utils/recommendations';
 
 const addPost = async (req: AuthRequest, res: Response) => {
     const { bookTitle, bookAuthor, bookDescription, bookImage, userImage, recommendation, rating } = req.body;
@@ -138,11 +140,62 @@ const getPostsByUserId = async (req: Request, res: Response) => {
     }
 };
 
+const getAiRecommendation = async (req: AuthRequest, res: Response) => {
+    // setTimeout(() => {
+    //     return res.status(200).json([]);
+    // }, 3000);
+    const userId = req.user?.id;
+    if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        // 1. Get user's physical reading history (composite key: title_author)
+        const allUserPosts = await postModel.find({ sender: userId }).select('bookTitle bookAuthor');
+        const readBooksFilter = allUserPosts.map(p => `${p.bookTitle}_${p.bookAuthor}`);
+
+        // 2. Get previous AI suggestions from User document
+        const user = await userModel.findById(userId);
+        const previousSuggestions = user?.suggestedBooks || [];
+
+        // 3. Combine into a unique blacklist (composite keys)
+        const blacklist = Array.from(new Set([...readBooksFilter, ...previousSuggestions]));
+
+        // 4. Get last 10 posts for active context
+        const lastPosts = await postModel.find({ sender: userId })
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .select('bookTitle bookAuthor recommendation');
+
+        const bookContext = lastPosts.map(p => `- "${p.bookTitle}" by ${p.bookAuthor} (Recommendation: ${p.recommendation})`).join('\n');
+
+        // 5. Generate new recommendations excluding blacklist
+        const recommendations = await generateBookRecommendations(bookContext, blacklist);
+
+        // 6. Update User document with new suggestions using composite key format
+        const newCompositeKeys = recommendations.map(item =>
+            `${item.volumeInfo.title}_${(item.volumeInfo.authors || []).join(', ')}`
+        );
+
+        if (user) {
+            user.suggestedBooks = Array.from(new Set([...user.suggestedBooks, ...newCompositeKeys]));
+            await user.save();
+        }
+
+        res.status(200).json(recommendations);
+
+    } catch (err: any) {
+        console.error('Gemini Recommendation Error:', err);
+        res.status(500).json({ message: err.message });
+    }
+};
+
 export default {
     addPost,
     getAllPosts,
     getPostById,
     getPostsByUserId,
     updatePost,
-    deletePost
+    deletePost,
+    getAiRecommendation
 };
