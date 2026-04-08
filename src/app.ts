@@ -18,10 +18,10 @@ import cookieParser from 'cookie-parser';
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 443;
+const port = process.env.PORT || 80;
 
 app.use(cors({
-    origin: ['https://localhost', 'https://localhost:80', 'http://localhost', 'http://localhost:80'],
+    origin: ['https://localhost', 'https://localhost:80', 'https://localhost:443', 'http://localhost', 'http://localhost:80'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -102,9 +102,11 @@ mongoose.connect(mongoUri)
             credentials = { key: keyPem, cert: certPem };
         }
 
-        https.createServer(credentials, app).listen(port, () => {
-            console.log(`HTTPS Server is running on port ${port}`);
-        });
+        if (process.env.NODE_ENV !== 'test') {
+            https.createServer(credentials, app).listen(port, () => {
+                console.log(`HTTPS Server is running on port ${port}`);
+            });
+        }
     })
     .catch((err) => {
         console.error('Could not connect to mongo', err);
