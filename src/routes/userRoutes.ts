@@ -38,20 +38,13 @@ import authMiddleware from '../middleware/authMiddleware';
 
 /**
 * @swagger
-* /user/{id}:
+* /user:
 *   get:
-*     summary: Get the user by id
+*     summary: Get the user profile of the authenticated user
 *     tags: [Users]
-*     parameters:
-*       - in: path
-*         name: id
-*         schema:
-*           type: string
-*         required: true
-*         description: The user id
 *     responses:
 *       200:
-*         description: The user description by id
+*         description: The user profile
 *         content:
 *           application/json:
 *             schema:

@@ -34,35 +34,36 @@ describe('User API', () => {
         userId = response.body.userId;
     });
 
-    test('Get all users', async () => {
-        const response = await request(app).get('/user');
-        expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBeTruthy();
-        expect(response.body.length).toBeGreaterThan(0);
-    });
-
-    test('Get user by id', async () => {
+    test('Get user profile', async () => {
         const response = await request(app)
-            .get(`/user/${userId}`)
+            .get(`/user`)
             .set('Authorization', `Bearer ${accessToken}`);
         expect(response.status).toBe(200);
-        expect(response.body.email).toBe(testUser.email);
-        expect(response.body.password).toBeUndefined(); // Should not return password
+        expect(response.body.returnUser.email).toBe(testUser.email);
+        expect(response.body.returnUser.password).toBeUndefined(); // Should not return password
     });
-    test('Get user by id - Not Found', async () => {
-        const fakeId = new mongoose.Types.ObjectId();
+
+    test('Update user profile', async () => {
         const response = await request(app)
-            .get(`/user/${fakeId}`)
+            .put(`/user/update`)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({ username: 'new_username' });
+        expect(response.status).toBe(200);
+        expect(response.body.message).toBe('User updated successfully');
+
+        const verifyResponse = await request(app)
+            .get(`/user`)
+            .set('Authorization', `Bearer ${accessToken}`);
+        expect(verifyResponse.body.returnUser.username).toBe('new_username');
+    });
+
+    test('Get user profile - Not Found', async () => {
+        await userModel.deleteMany({});
+        const response = await request(app)
+            .get(`/user`)
             .set('Authorization', `Bearer ${accessToken}`);
         expect(response.status).toBe(404);
         expect(response.body.message).toBe('User not found');
-    });
-
-    test('Get user by id - Invalid ID', async () => {
-        const response = await request(app)
-            .get('/user/123')
-            .set('Authorization', `Bearer ${accessToken}`);
-        expect(response.status).toBe(400);
     });
 });
 
