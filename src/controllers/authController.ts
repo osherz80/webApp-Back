@@ -44,7 +44,7 @@ const sendAuthResponse = (res: Response, user: UserDto, accessToken: string, ref
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    res.status(200).json({
+    res.status(201).json({
         accessToken,
         isAuth: true,
         user
@@ -143,7 +143,7 @@ const login = async (req: Request, res: Response) => {
 };
 
 const logout = async (req: Request, res: Response) => {
-    const refreshToken = req.cookies?.refreshToken;
+    const refreshToken = process.env.NODE_ENV !== 'test' ? req.cookies?.refreshToken : req.body.refreshToken;
 
     if (!refreshToken) {
         res.status(400).json({ message: 'Missing refresh token' });
@@ -176,7 +176,7 @@ const logout = async (req: Request, res: Response) => {
 };
 
 const refresh = async (req: Request, res: Response) => {
-    const refreshToken = req.cookies?.refreshToken;
+    const refreshToken = process.env.NODE_ENV !== 'test' ? req.cookies?.refreshToken : req.body.refreshToken;
 
     if (!refreshToken) {
         res.status(400).json({ message: 'Missing refresh token' });
