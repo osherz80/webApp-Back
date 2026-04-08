@@ -344,4 +344,27 @@ router.put('/:id', authMiddleware, postController.updatePost);
 */
 router.delete('/:id', authMiddleware, postController.deletePost);
 
+/**
+* @swagger
+* /post/{id}/like:
+*   put:
+*     summary: Toggle like on the post by id
+*     tags: [Posts]
+*     security:
+*       - bearerAuth: []
+*     parameters:
+*       - in: path
+*         name: id
+*         schema:
+*           type: string
+*         required: true
+*         description: The post id
+*     responses:
+*       200:
+*         description: Post like toggled
+*       404:
+*         description: The post was not found
+*/
+router.put('/:id/like', authMiddleware, postController.toggleLike);
+
 export default router;

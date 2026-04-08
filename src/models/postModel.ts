@@ -8,6 +8,7 @@ export interface IPost extends Document {
     userImage?: string;
     recommendation: string;
     rating: number;
+    likes: Types.ObjectId[];
     sender: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
@@ -44,6 +45,10 @@ const postSchema = new Schema<IPost>({
         min: 1,
         max: 5
     },
+    likes: [{
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    }],
     sender: {
         type: Schema.Types.ObjectId,
         ref: 'User',

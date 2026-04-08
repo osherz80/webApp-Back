@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import postModel from '../models/postModel';
 import userModel from '../models/userModel';
+import mongoose from 'mongoose';
 import { generateBookRecommendations } from '../utils/recommendations';
 
 const addPost = async (req: AuthRequest, res: Response) => {
@@ -190,6 +191,36 @@ const getAiRecommendation = async (req: AuthRequest, res: Response) => {
     }
 };
 
+const toggleLike = async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        const post = await postModel.findById(id);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        const objectId = new mongoose.Types.ObjectId(userId);
+
+        const isLiked = post.likes.some(id => id.equals(objectId));
+        if (isLiked) {
+            post.likes = post.likes.filter(id => !id.equals(objectId));
+        } else {
+            post.likes.push(objectId);
+        }
+
+        const updatedPost = await post.save();
+        res.status(200).json(updatedPost);
+    } catch (err: any) {
+        res.status(400).json({ message: err.message });
+    }
+};
+
 export default {
     addPost,
     getAllPosts,
@@ -197,5 +228,6 @@ export default {
     getPostsByUserId,
     updatePost,
     deletePost,
-    getAiRecommendation
+    getAiRecommendation,
+    toggleLike
 };
