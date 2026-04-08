@@ -1,7 +1,9 @@
-﻿import express from 'express';
+import express from 'express';
 import mongoose from 'mongoose';
 import fs from 'fs';
 import dotenv from 'dotenv';
+import https from 'https';
+import forge from 'node-forge';
 import postRoutes from './routes/postRoutes';
 import commentRoutes from './routes/commentRoutes';
 import authRoutes from './routes/authRoutes';
@@ -16,10 +18,10 @@ import cookieParser from 'cookie-parser';
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 80;
 
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: ['https://localhost', 'https://localhost:80', 'https://localhost:443', 'http://localhost', 'http://localhost:80'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -63,9 +65,48 @@ if (!mongoUri) {
 mongoose.connect(mongoUri)
     .then(() => {
         console.log('Connected to mongo');
-        app.listen(port, () => {
-            console.log(`Server is running on port ${port}`);
-        });
+        
+        let credentials: { key: string, cert: string };
+        const keyPath = path.join(__dirname, '../../key.pem');
+        const certPath = path.join(__dirname, '../../cert.pem');
+        
+        if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+            credentials = {
+                key: fs.readFileSync(keyPath, 'utf8'),
+                cert: fs.readFileSync(certPath, 'utf8')
+            };
+        } else {
+            console.log('Generating self-signed certificate...');
+            const pki = forge.pki;
+            const keys = pki.rsa.generateKeyPair(2048);
+            const cert = pki.createCertificate();
+            cert.publicKey = keys.publicKey;
+            cert.serialNumber = '01';
+            cert.validity.notBefore = new Date();
+            cert.validity.notAfter = new Date();
+            cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
+            const attrs = [{ name: 'commonName', value: 'localhost' }];
+            cert.setSubject(attrs);
+            cert.setIssuer(attrs);
+            cert.setExtensions([{
+                name: 'subjectAltName',
+                altNames: [{ type: 2, value: 'localhost' }, { type: 7, ip: '127.0.0.1' }]
+            }]);
+            cert.sign(keys.privateKey, forge.md.sha256.create());
+            
+            const keyPem = pki.privateKeyToPem(keys.privateKey);
+            const certPem = pki.certificateToPem(cert);
+            
+            fs.writeFileSync(keyPath, keyPem);
+            fs.writeFileSync(certPath, certPem);
+            credentials = { key: keyPem, cert: certPem };
+        }
+
+        if (process.env.NODE_ENV !== 'test') {
+            https.createServer(credentials, app).listen(port, () => {
+                console.log(`HTTPS Server is running on port ${port}`);
+            });
+        }
     })
     .catch((err) => {
         console.error('Could not connect to mongo', err);
