@@ -33,19 +33,23 @@ describe('Post API', () => {
             password: testUser.password,
         });
         accessToken = response.body.accessToken;
-        userId = response.body.userId;
+        userId = response.body.user.id;
     });
+
+    const validPostData = {
+        bookTitle: 'Test Book',
+        bookAuthor: 'Test Author',
+        recommendation: 'Good book',
+        rating: 5
+    };
 
     test('Create post', async () => {
         const response = await request(app)
             .post('/post')
             .set('Authorization', `Bearer ${accessToken}`)
-            .send({
-                title: 'Test Post',
-                message: 'This is a test post',
-            });
+            .send(validPostData);
         expect(response.status).toBe(201);
-        expect(response.body.title).toBe('Test Post');
+        expect(response.body.bookTitle).toBe('Test Book');
         expect(response.body.sender).toBe(userId);
     });
 
@@ -53,58 +57,47 @@ describe('Post API', () => {
         await request(app)
             .post('/post')
             .set('Authorization', `Bearer ${accessToken}`)
-            .send({
-                title: 'Test Post',
-                message: 'This is a test post',
-            });
+            .send(validPostData);
         const response = await request(app).get('/post');
         expect(response.status).toBe(200);
-        expect(response.body.length).toBeGreaterThan(0);
+        expect(response.body.posts.length).toBeGreaterThan(0);
     });
 
     test('Get post by id', async () => {
         const postRes = await request(app)
             .post('/post')
             .set('Authorization', `Bearer ${accessToken}`)
-            .send({
-                title: 'Test Post',
-                message: 'This is a test post',
-            });
+            .send(validPostData);
         const postId = postRes.body._id;
         const response = await request(app).get(`/post/${postId}`);
         expect(response.status).toBe(200);
-        expect(response.body.title).toBe('Test Post');
+        expect(response.body.bookTitle).toBe('Test Book');
     });
 
     test('Update post', async () => {
         const postRes = await request(app)
             .post('/post')
             .set('Authorization', `Bearer ${accessToken}`)
-            .send({
-                title: 'Test Post',
-                message: 'This is a test post',
-            });
+            .send(validPostData);
         const postId = postRes.body._id;
         const response = await request(app)
             .put(`/post/${postId}`)
             .set('Authorization', `Bearer ${accessToken}`)
-            .send({
-                title: 'Updated Title',
-                message: 'Updated Message',
-            });
+            .send({ ...validPostData, bookTitle: 'Updated Book Title' });
         expect(response.status).toBe(200);
-        expect(response.body.title).toBe('Updated Title');
+        expect(response.body.bookTitle).toBe('Updated Book Title');
     });
+
     test('Get posts by sender', async () => {
         await request(app)
             .post('/post')
             .set('Authorization', `Bearer ${accessToken}`)
-            .send({ title: 'Sender Post', message: 'Message' });
+            .send(validPostData);
 
-        const response = await request(app).get(`/post?sender=${userId}`);
+        const response = await request(app).get(`/post/user/${userId}`);
         expect(response.status).toBe(200);
-        expect(response.body.length).toBeGreaterThan(0);
-        expect(response.body[0].sender).toBe(userId);
+        expect(response.body.posts.length).toBeGreaterThan(0);
+        expect(response.body.posts[0].sender._id).toBe(userId);
     });
 
     test('Get post by id - Not Found', async () => {
@@ -118,7 +111,7 @@ describe('Post API', () => {
         const response = await request(app)
             .put(`/post/${fakeId}`)
             .set('Authorization', `Bearer ${accessToken}`)
-            .send({ title: 'New', message: 'New' });
+            .send(validPostData);
         expect(response.status).toBe(404);
     });
 
@@ -126,10 +119,7 @@ describe('Post API', () => {
         const response = await request(app)
             .post('/post')
             .set('Authorization', `Bearer ${accessToken}`)
-            .send({ title: '' }); // message is required by schema usually
-        // Depending on schema requirements. If message is empty it might fail validation.
-        // If my schema doesn't require message, this might pass. Let's assume it fails if empty.
-        // Actually, let's just test a malformed request if schema is loose.
+            .send({ bookTitle: '' }); // missing required fields
         expect(response.status).toBe(400);
     });
 });
