@@ -19,7 +19,7 @@ const addComment = async (req: AuthRequest, res: Response) => {
 };
 
 const getAllComments = async (req: Request, res: Response) => {
-    const { postId } = req.query;
+    const postId: string = req.query.postId?.toString() || '';
     try {
         if (!postId) {
             res.status(400).json({ message: 'postId is required' } as any);
