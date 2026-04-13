@@ -21,7 +21,13 @@ const app = express();
 const port = process.env.PORT || 80;
 
 app.use(cors({
-    origin: ['https://localhost', 'https://localhost:80', 'https://localhost:443', 'http://localhost', 'http://localhost:80'],
+    origin: ['https://localhost', 
+            'https://localhost:80', 
+            'https://localhost:443', 
+            'http://localhost', 
+            'http://localhost:80', 
+            'http://10.10.246.14', 
+            'https://10.10.246.14'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
