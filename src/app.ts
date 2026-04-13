@@ -27,7 +27,9 @@ app.use(cors({
             'http://localhost', 
             'http://localhost:80', 
             'http://10.10.246.14', 
-            'https://10.10.246.14'],
+            'https://10.10.246.14',
+            'https://193.106.55.174',
+            'http://193.106.55.174'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
