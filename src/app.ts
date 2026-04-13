@@ -29,7 +29,9 @@ app.use(cors({
             'http://10.10.246.14', 
             'https://10.10.246.14',
             'https://193.106.55.174',
-            'http://193.106.55.174'],
+            'http://193.106.55.174',
+            'https://node14.cs.colman.ac.il',
+            'http://node14.cs.colman.ac.il'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
