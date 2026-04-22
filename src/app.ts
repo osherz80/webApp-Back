@@ -78,8 +78,8 @@ mongoose.connect(mongoUri)
         console.log('Connected to mongo');
 
         let credentials: { key: string, cert: string };
-        const keyPath = path.join(__dirname, '../../../key.pem');
-        const certPath = path.join(__dirname, '../../../cert.pem');
+        const keyPath = '/home/node14/key.pem';
+        const certPath = '/home/node14/cert.pem';
 
         if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
             credentials = {
