@@ -59,7 +59,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // 4. Fallback: כל בקשה שלא נענתה ע"י ה-API, תחזיר את ה-index.html של ה-React
 // זה מה שמאפשר ל-React Router לעבוד וגם מגיש את האתר ב-URL הראשי
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
     // בודקים אם הקובץ קיים לפני ששולחים (מונע לופים במקרה של תקלה בבילד)
     const indexPath = path.join(frontendDistPath, 'index.html');
     if (fs.existsSync(indexPath)) {
