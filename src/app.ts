@@ -21,7 +21,18 @@ const app = express();
 const port = process.env.PORT || 80;
 
 app.use(cors({
-    origin: ['https://localhost', 'https://localhost:80', 'https://localhost:443', 'http://localhost', 'http://localhost:80'],
+    origin: [
+        'https://localhost',
+        'https://localhost:80',
+        'https://localhost:443',
+        'http://localhost',
+        'http://localhost:80',
+        'https://node14.cs.colman.ac.il',
+        'http://node14.cs.colman.ac.il',
+        'https://193.106.55.174',
+        'http://localhost',
+        'https://localhost'
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -65,11 +76,11 @@ if (!mongoUri) {
 mongoose.connect(mongoUri)
     .then(() => {
         console.log('Connected to mongo');
-        
+
         let credentials: { key: string, cert: string };
-        const keyPath = path.join(__dirname, '../../key.pem');
-        const certPath = path.join(__dirname, '../../cert.pem');
-        
+        const keyPath = path.join(__dirname, '../../../key.pem');
+        const certPath = path.join(__dirname, '../../../cert.pem');
+
         if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
             credentials = {
                 key: fs.readFileSync(keyPath, 'utf8'),
@@ -93,10 +104,10 @@ mongoose.connect(mongoUri)
                 altNames: [{ type: 2, value: 'localhost' }, { type: 7, ip: '127.0.0.1' }]
             }]);
             cert.sign(keys.privateKey, forge.md.sha256.create());
-            
+
             const keyPem = pki.privateKeyToPem(keys.privateKey);
             const certPem = pki.certificateToPem(cert);
-            
+
             fs.writeFileSync(keyPath, keyPem);
             fs.writeFileSync(certPath, certPem);
             credentials = { key: keyPem, cert: certPem };
