@@ -14,25 +14,16 @@ import swaggerSpecs from './swaggerConfig';
 import cors from 'cors';
 import path from 'path';
 import cookieParser from 'cookie-parser';
-import { fileURLToPath } from 'url'; // הוספת ייבוא לטיפול בנתיבים
 
 dotenv.config();
 
 const app = express();
-// חובה להשתמש בפורט 443 עבור HTTPS ללא פורט ב-URL
 const port = process.env.NODE_ENV === 'production' ? 443 : (process.env.PORT || 80);
 
-// הוספנו בדיקה לראות אם אנחנו רצים מה-dist או מה-src
 const isProduction = __dirname.includes('dist');
 const frontendDistPath = isProduction
     ? path.join(__dirname, '..', '..', 'webApp-Front', 'dist')
     : path.join(__dirname, '..', 'webApp-Front', 'dist');
-
-// הדפסה ללוגים כדי לוודא שזה עובד - תבדוק את זה ב-pm2 logs
-console.log('--- Debugging Paths ---');
-console.log('Current __dirname:', __dirname);
-console.log('Target Frontend Path:', frontendDistPath);
-console.log('Index.html exists?', fs.existsSync(path.join(frontendDistPath, 'index.html')));
 
 app.use(cors({
     origin: [
@@ -49,17 +40,14 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// 1. הגשת קבצים סטטיים של הפרונטנד (חובה לפני ה-API)
 app.use(express.static(frontendDistPath));
 
-// 2. הגדרת תיקיית העלאות (Uploads)
 const uploadDir = path.join(__dirname, '../public/uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 app.use('/uploads', express.static(uploadDir));
 
-// 3. API Routes
 app.use('/post', postRoutes);
 app.use('/comments', commentRoutes);
 app.use('/auth', authRoutes);
@@ -67,10 +55,7 @@ app.use('/user', userRoutes);
 app.use('/file', fileRoutes);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
-// 4. Fallback: כל בקשה שלא נענתה ע"י ה-API, תחזיר את ה-index.html של ה-React
-// זה מה שמאפשר ל-React Router לעבוד וגם מגיש את האתר ב-URL הראשי
 app.get(/.*/, (req, res) => {
-    // בודקים אם הקובץ קיים לפני ששולחים (מונע לופים במקרה של תקלה בבילד)
     const indexPath = path.join(frontendDistPath, 'index.html');
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
@@ -79,7 +64,6 @@ app.get(/.*/, (req, res) => {
     }
 });
 
-// Database Connection
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
     console.error('mongoUri is missing in .env');
@@ -100,9 +84,6 @@ mongoose.connect(mongoUri)
                 cert: fs.readFileSync(certPath, 'utf8')
             };
         } else {
-            // לוגיקת יצירת התעודה שלך נשארת כאן...
-            // (השארתי את זה כפי שהיה בקוד המקור שלך)
-            console.log('Generating self-signed certificate...');
             const pki = forge.pki;
             const keys = pki.rsa.generateKeyPair(2048);
             const cert = pki.createCertificate();
