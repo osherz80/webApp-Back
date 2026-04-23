@@ -22,7 +22,17 @@ const app = express();
 // חובה להשתמש בפורט 443 עבור HTTPS ללא פורט ב-URL
 const port = process.env.NODE_ENV === 'production' ? 443 : (process.env.PORT || 80);
 
-const frontendDistPath = path.join(__dirname, '..', '..', 'webApp-Front', 'dist');
+// הוספנו בדיקה לראות אם אנחנו רצים מה-dist או מה-src
+const isProduction = __dirname.includes('dist');
+const frontendDistPath = isProduction
+    ? path.join(__dirname, '..', '..', 'webApp-Front', 'dist')
+    : path.join(__dirname, '..', 'webApp-Front', 'dist');
+
+// הדפסה ללוגים כדי לוודא שזה עובד - תבדוק את זה ב-pm2 logs
+console.log('--- Debugging Paths ---');
+console.log('Current __dirname:', __dirname);
+console.log('Target Frontend Path:', frontendDistPath);
+console.log('Index.html exists?', fs.existsSync(path.join(frontendDistPath, 'index.html')));
 
 app.use(cors({
     origin: [
