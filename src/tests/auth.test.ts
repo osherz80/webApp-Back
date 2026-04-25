@@ -8,7 +8,6 @@ import jwt from 'jsonwebtoken';
 let server: any;
 
 beforeAll(async () => {
-    console.log('Before All');
     server = app.listen(0);
 });
 
