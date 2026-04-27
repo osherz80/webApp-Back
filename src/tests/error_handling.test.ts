@@ -40,7 +40,7 @@ describe('Database Error Handling', () => {
         });
 
         const response = await request(app)
-            .get(`/user/${loginRes.body.userId}`)
+            .get(`/user`)
             .set('Authorization', `Bearer ${token}`);
         expect(response.status).toBe(400);
         expect(response.body.message).toBe('User fetch failure');

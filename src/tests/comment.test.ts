@@ -25,29 +25,30 @@ describe('Comment API', () => {
         password: 'password123',
         username: 'comment_user',
     };
+    const validPostData = {
+        bookTitle: 'Test Book',
+        bookAuthor: 'Test Author',
+        recommendation: 'Good book',
+        rating: 5
+    };
 
     beforeEach(async () => {
         await commentModel.deleteMany({});
         await postModel.deleteMany({});
         await userModel.deleteMany({});
 
-        // Register and Login
         await request(app).post('/auth/register').send(testUser);
         const loginRes = await request(app).post('/auth/login').send({
             email: testUser.email,
             password: testUser.password,
         });
         accessToken = loginRes.body.accessToken;
-        userId = loginRes.body.userId;
+        userId = loginRes.body.user.id;
 
-        // Create a Post
         const postRes = await request(app)
             .post('/post')
             .set('Authorization', `Bearer ${accessToken}`)
-            .send({
-                title: 'Post for Comment',
-                message: 'Post Message',
-            });
+            .send(validPostData);
         postId = postRes.body._id;
     });
 
@@ -67,13 +68,13 @@ describe('Comment API', () => {
 
     test('Get all comments', async () => {
         await request(app)
-            .post('/comments')
+            .post(`/comments`)
             .set('Authorization', `Bearer ${accessToken}`)
             .send({
                 message: 'Test Comment',
                 postId: postId
             });
-        const response = await request(app).get('/comments');
+        const response = await request(app).get(`/comments?postId=${postId}`);
         expect(response.status).toBe(200);
         expect(response.body.length).toBeGreaterThan(0);
     });

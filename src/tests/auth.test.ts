@@ -8,7 +8,6 @@ import jwt from 'jsonwebtoken';
 let server: any;
 
 beforeAll(async () => {
-    console.log('Before All');
     server = app.listen(0);
 });
 
@@ -31,7 +30,9 @@ describe('Auth API', () => {
     test('Register a new user', async () => {
         const response = await request(app).post('/auth/register').send(testUser);
         expect(response.status).toBe(201);
-        expect(response.body).toHaveProperty('userId');
+        expect(response.body).toHaveProperty('user');
+        expect(response.body).toHaveProperty('accessToken');
+        expect(response.body).toHaveProperty('isAuth');
     });
 
     test('Login user', async () => {
@@ -40,10 +41,10 @@ describe('Auth API', () => {
             email: testUser.email,
             password: testUser.password,
         });
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(201);
+        expect(response.body).toHaveProperty('user');
         expect(response.body).toHaveProperty('accessToken');
-        expect(response.body).toHaveProperty('refreshToken');
-        expect(response.body).toHaveProperty('userId');
+        expect(response.body).toHaveProperty('isAuth');
     });
 
     test('Refresh token', async () => {
@@ -52,12 +53,14 @@ describe('Auth API', () => {
             email: testUser.email,
             password: testUser.password,
         });
-        const refreshToken = loginRes.body.refreshToken;
+        const refreshToken = loginRes.headers['set-cookie'][0].split(';')[0].split('=')[1];
+        // const refreshToken = loginRes.body.accessToken;
 
         const response = await request(app).post('/auth/refresh').send({ refreshToken });
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(201);
+        expect(response.body).toHaveProperty('user');
         expect(response.body).toHaveProperty('accessToken');
-        expect(response.body).toHaveProperty('refreshToken');
+        expect(response.body).toHaveProperty('isAuth');
     });
 
     test('Logout user', async () => {
@@ -66,7 +69,7 @@ describe('Auth API', () => {
             email: testUser.email,
             password: testUser.password,
         });
-        const refreshToken = loginRes.body.refreshToken;
+        const refreshToken = loginRes.headers['set-cookie'][0].split(';')[0].split('=')[1];
         const response = await request(app).post('/auth/logout').send({ refreshToken });
         expect(response.status).toBe(200);
     });
@@ -108,7 +111,7 @@ describe('Auth API', () => {
             email: testUser.email,
             password: testUser.password,
         });
-        const refreshToken = loginRes.body.refreshToken;
+        const refreshToken = loginRes.headers['set-cookie'][0].split(';')[0].split('=')[1];
 
         // Manually remove the token from the user in DB
         await userModel.updateOne(
@@ -150,7 +153,7 @@ describe('Auth API', () => {
             email: testUser.email,
             password: testUser.password,
         });
-        const refreshToken = loginRes.body.refreshToken;
+        const refreshToken = loginRes.headers['set-cookie'][0].split(';')[0].split('=')[1];
 
         // Manually remove the token from the user in DB
         await userModel.updateOne(

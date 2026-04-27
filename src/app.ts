@@ -21,7 +21,17 @@ const app = express();
 const port = process.env.PORT || 80;
 
 app.use(cors({
-    origin: ['https://localhost', 'https://localhost:80', 'https://localhost:443', 'http://localhost', 'http://localhost:80'],
+    origin: ['https://localhost', 
+            'https://localhost:80', 
+            'https://localhost:443', 
+            'http://localhost', 
+            'http://localhost:80', 
+            'http://10.10.246.14', 
+            'https://10.10.246.14',
+            'https://193.106.55.174',
+            'http://193.106.55.174',
+            'https://node14.cs.colman.ac.il',
+            'http://node14.cs.colman.ac.il'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']

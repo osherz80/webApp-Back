@@ -24,7 +24,6 @@ const generateBookCoverUrls = async (books: GoogleBook[]) => {
 
         try {
             const thumbnailUrl = await getBookCoverUrl(title, author);
-            console.log("new thumbnailUrl", thumbnailUrl);
 
             if (thumbnailUrl) {
                 book.volumeInfo.imageLinks = {
@@ -51,13 +50,7 @@ export const generateBookRecommendations = async (bookContext: string, blacklist
         const prompt = getRecommendationPrompt(bookContext, blacklist);
 
         const result = await askGemini(prompt, dynamicModel, catchRetry);
-        console.log("result", result);
         const responseText = result.response.text();
-
-
-        console.log("responseText", responseText);
-
-
         const parsedData = JSON.parse(responseText);
         const recommendations: GoogleBook[] = parsedData.items.map((item: GoogleBook) => ({
             id: `${item.volumeInfo.title.replace(/\s+/g, '_')}_${(item.volumeInfo.authors || []).join('_').replace(/\s+/g, '_')}`,
@@ -66,7 +59,6 @@ export const generateBookRecommendations = async (bookContext: string, blacklist
 
         await generateBookCoverUrls(recommendations);
 
-        console.log("recommendations after", recommendations);
 
         return recommendations;
     } catch (parseError: any) {
