@@ -37,7 +37,6 @@ describe('Comment API', () => {
         await postModel.deleteMany({});
         await userModel.deleteMany({});
 
-        // Register and Login
         await request(app).post('/auth/register').send(testUser);
         const loginRes = await request(app).post('/auth/login').send({
             email: testUser.email,
@@ -46,7 +45,6 @@ describe('Comment API', () => {
         accessToken = loginRes.body.accessToken;
         userId = loginRes.body.user.id;
 
-        // Create a Post
         const postRes = await request(app)
             .post('/post')
             .set('Authorization', `Bearer ${accessToken}`)
